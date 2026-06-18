@@ -1,0 +1,167 @@
+syntax = "proto3";
+
+package kalix.auth.v1alpha;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+// See https://cloud.google.com/apis/design/file_structure#proto_options
+option go_package = "github.com/lightbend/kalix/cli/api/kalix/auth/v1alpha;auth";
+option csharp_namespace = "Kalix.Auth.V1Alpha";
+option java_multiple_files = true;
+option java_outer_classname = "AuthProto";
+option java_package = "kalix.api.auth.v1alpha";
+option objc_class_prefix = "LBCSEV1AP";
+option php_namespace = "Kalix\\Auth\\V1alpha";
+
+// The Auth API provides token management for authenticating with Kalix APIs.
+//
+// Kalix uses a two-token model:
+//   - Refresh tokens (or session tokens) are long-lived and are obtained through
+//     user login (via the Users API). They cannot be used directly for API calls.
+//   - Access tokens are short-lived tokens derived from a refresh or session token.
+//     They are used to authenticate individual API requests.
+//
+// Service tokens (project-scoped tokens) follow the same model and are obtained
+// through the Projects API.
+service Auth {
+    // Create a container registry access token.
+    //
+    // Creates a short-lived token for authenticating with the Kalix container
+    // registry. The token provides access to push and pull container images for
+    // the authenticated user or service.
+    //
+    // Authentication required: yes
+    rpc CreateContainerRegistryToken(CreateContainerRegistryTokenRequest) returns (ContainerRegistryToken) {
+        option (google.api.http) = {
+            post: "/kalix.io/v1alpha/container-registry/tokens"
+        };
+    }
+
+    // Create a short-lived access token.
+    //
+    // Derives a short-lived access token from the current refresh, session, or
+    // service token. Access tokens are used to authenticate individual API requests.
+    //
+    // Authentication required: yes (refresh, session, or service token)
+    rpc CreateAccessToken (CreateAccessTokenRequest) returns (AccessToken) {
+        option (google.api.http) = {
+            post: "/kalix.io/v1alpha/auth/tokens"
+        };
+    }
+
+    // Get information about the current token.
+    //
+    // Returns details about the token used to make this request, including its
+    // type, the principal it belongs to, its expiry time, and the scopes it has.
+    //
+    // Authentication required: yes
+    rpc GetCurrentToken (GetCurrentTokenRequest) returns (CurrentToken) {
+        option (google.api.http) = {
+            get: "/kalix.io/v1alpha/auth/current"
+        };
+    }
+}
+
+// Create a container registry access token request.
+message CreateContainerRegistryTokenRequest{
+}
+
+// A short-lived token for authenticating with the Kalix container registry.
+message ContainerRegistryToken {
+    // The subject of the token (the authenticated user or service resource name).
+    string subject = 1;
+    // The token value. Use this as credentials when authenticating with the container registry.
+    string token = 2;
+    // When the token was created.
+    google.protobuf.Timestamp created_time = 3;
+    // When the token expires.
+    google.protobuf.Timestamp expire_time = 4;
+    // The Kalix scopes granted by this token.
+    repeated TokenScope scopes = 5;
+    // The container registry-specific scopes granted by this token (e.g., push, pull).
+    repeated string container_registry_scopes = 6;
+}
+
+// Create a short-lived access token request.
+message CreateAccessTokenRequest {
+}
+
+// A short-lived access token for making Kalix API requests.
+message AccessToken {
+    // The subject of this access token — the name of the refresh, session, or
+    // service token that was used to create it.
+    string subject = 1;
+    // The token value. Pass this as a Bearer token in the Authorization header.
+    string token = 2;
+    // When the token was created.
+    google.protobuf.Timestamp created_time = 3;
+    // When the token expires.
+    google.protobuf.Timestamp expire_time = 4;
+    // The scopes this token grants access to.
+    repeated TokenScope scopes = 5;
+}
+
+// Get information about the current token.
+message GetCurrentTokenRequest {
+}
+
+// Information about the current token
+message CurrentToken {
+    // The name of the current principal. Will either be a user (prefixed with names/) or a project (prefixed with projects/)
+    string name = 1;
+    // The type of token used to login.
+    TokenType token_type = 2;
+    // The name of the token.
+    string token_name = 3;
+    // When this token was created.
+    google.protobuf.Timestamp created_time = 4;
+    // When this token expires.
+    google.protobuf.Timestamp expire_time = 5;
+    // The scopes this token has access to.
+    repeated TokenScope scopes = 6;
+    // Description of this token or the token used to create it.
+    string description = 7;
+    // The groups that a user is in according to the token
+    repeated string groups = 8;
+}
+
+// The scope of a token.
+enum TokenScope {
+    // Can do everything
+    ALL = 0;
+
+    // Can read/write projects
+    PROJECTS = 1;
+
+    // Can read/write the user, including create new tokens
+    USER = 2;
+
+    // Can access the execution servers (ie, kubernetes). Only works with session tokens.
+    EXECUTION = 3;
+
+    // Can access organizations
+    ORGANIZATIONS = 4;
+
+    // Can access container registry
+    CONTAINER_REGISTRY = 5;
+}
+
+// A token type.
+enum TokenType {
+    // A long lived persistent token that represents a user. Can only be used to
+    // create access tokens. Can be revoked.
+    REFRESH = 0;
+
+    // A short lived token that can be obtained using another token. Can't be
+    // revoked.
+    ACCESS = 1;
+
+    // A medium lived token that represents a user, used for web access etc.
+    // Stays active as long as its used. Can be revoked.
+    SESSION = 2;
+
+    // A token representing a service that has access to a single project. Can
+    // only be used to create access tokens. Can be revoked.
+    SERVICE = 3;
+}

@@ -1,0 +1,304 @@
+syntax = "proto3";
+
+package kalix.datamanagement.v1alpha;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/lightbend/kalix/cli/api/kalix/datamanagement/v1alpha;datamanagement";
+option java_outer_classname = "DataManagementProto";
+option java_package = "io.kalix.datamanagement.api.v1alpha";
+
+// The DataManagement API enables exporting and importing entity data for Akka services.
+//
+// Export and import operations are long-running and are represented as tasks.
+// Start an operation with Export or Import, then track its progress using GetTask,
+// WatchTask, or ListTasks. Operations can be cancelled with CancelTask.
+//
+// Authentication required: yes
+// Project roles required: admin
+service DataManagement {
+  // Export entity data from a service to external storage.
+  //
+  // Starts an asynchronous export task that writes event sourced entity events,
+  // snapshots, and/or value entity data to the configured store (Google Cloud
+  // Storage, Amazon S3, or a platform-managed store).
+  //
+  // Returns a task name that can be used to track progress.
+  rpc Export(ExportRequest) returns (ExportResponse);
+
+  // Import entity data into a service from external storage.
+  //
+  // Starts an asynchronous import task that reads previously exported data from
+  // the configured store and loads it into the service. Optionally truncates
+  // existing data before importing.
+  //
+  // Returns a task name that can be used to track progress.
+  rpc Import(ImportRequest) returns (ImportResponse);
+
+  // Get the current state of a data management task.
+  rpc GetTask(GetTaskRequest) returns (Task);
+
+  // Watch a data management task for progress updates.
+  //
+  // Returns a stream of progress events as the task runs. The stream ends when
+  // the task reaches a terminal state (COMPLETE, ERROR, or CANCELLED).
+  rpc WatchTask(WatchTaskRequest) returns (stream TaskProgress);
+
+  // Cancel a running or pending task.
+  //
+  // Requests cancellation of the task. The task may not be immediately cancelled;
+  // its status will transition to TASK_STATUS_CANCELLED once cancellation completes.
+  rpc CancelTask(CancelTaskRequest) returns (google.protobuf.Empty);
+
+  // List data management tasks for a project or service.
+  rpc ListTasks(ListTasksRequest) returns (ListTasksResponse);
+}
+
+message ExportRequest {
+  // The service, in format projects/<project-id>/services/<service-name>
+  string parent = 1;
+
+  // The store to export from
+  ExportStore store = 2;
+
+  ExportEventSourcedEntities event_source_entities = 3;
+
+  ExportValueEntities value_entities = 4;
+}
+
+message ExportEventSourcedEntities {
+  // Whether to export event sourced entities.
+  bool include = 1;
+
+  // If true, snapshots will not be exported.
+  bool exclude_snapshots = 2;
+
+  // If set, only entities of the given type will be exported.
+  repeated string include_entity_types = 3;
+}
+
+message ExportValueEntities {
+  // Whether to export value entities.
+  bool include = 1;
+
+  // If set, only entities of the given type will be exported.
+  repeated string include_entity_types = 2;
+}
+
+message ExportStore {
+  // The serialization format for exported data.
+  ExportFormat format = 1;
+  // The compression applied to exported objects.
+  ExportCompression compression = 2;
+  oneof store {
+    GoogleCloudStore google = 3;
+    S3Store s3 = 4;
+    PlatformManagedStore platform_managed = 5;
+  }
+  // If set, exported data will be split into multiple objects, each no larger
+  // than this size in bytes. Set to 0 to disable splitting (single object per
+  // entity type). Splitting is recommended for large datasets.
+  uint64 split_objects_at_bytes = 6;
+}
+
+enum ExportFormat {
+  EXPORT_FORMAT_PROTOBUF = 0;
+  // Newline separated JSON
+  EXPORT_FORMAT_JSON = 1;
+}
+
+enum ExportCompression {
+  EXPORT_COMPRESSION_GZIP = 0;
+  EXPORT_COMPRESSION_NONE = 1;
+}
+
+message GoogleCloudStore {
+  // The secret containing the GCS key
+  string key_json_secret = 1;
+
+  // The key within the secret for the GCS key
+  string key_json_key = 2;
+
+  // The bucket name
+  string bucket = 3;
+
+  // The object name prefix
+  string object_name_prefix = 4;
+}
+
+message S3Store {
+  // The secret containing the AWS credentials
+  string credentials_secret = 1;
+
+  // The key of the access key id in the secret, eg access-key-id
+  string access_key_id_key = 2;
+
+  // The key of the secret access key, eg secret-access-key
+  string secret_access_key_key = 3;
+
+  // The key of the session token, if applicable
+  string session_token_key = 4;
+
+  // The name of the bucket
+  string bucket = 5;
+
+  // The object name prefix
+  string object_name_prefix = 6;
+
+  // The region, if different from the region that the execution cluster is running in
+  string region = 7;
+
+  // The custom S3 endpoint url to connect to, e.g., for PrivateLink access.
+  // If not set, defaults to standard AWS S3 endpoint.
+  string endpoint_url = 8;
+}
+
+// Platform managed stores is a store that is managed by the platform for user use.
+//
+// Only supported in some dedicated regions.
+message PlatformManagedStore {
+  // The object name prefix.
+  string object_name_prefix = 1;
+}
+
+// Response from Export, containing the task name to use for tracking.
+message ExportResponse {
+  // The resource name of the created export task.
+  string name = 1;
+}
+
+message ImportRequest {
+  // The service to import data into, in format projects/<project-id>/services/<service-name>.
+  string parent = 1;
+
+  // The store to import data from.
+  ExportStore store = 2;
+
+  ImportEventSourcedEntities event_sourced_entities = 3;
+
+  ImportValueEntities value_entities = 4;
+
+  // If true, all existing data for all entity types will be deleted before importing.
+  // Use with caution: this is irreversible and cannot be rolled back.
+  bool truncate = 5;
+}
+
+message ImportEventSourcedEntities {
+  // Whether to import event sourced entities.
+  bool include = 1;
+
+  // If true, snapshots will not be imported.
+  bool exclude_snapshots = 2;
+
+  // If set, overrides the files that will be used to load events.
+  //
+  // File names should be relative to the configured object name prefix.
+  repeated string events_files = 3;
+
+  // If set, overrides the files that will be used to snapshots.
+  //
+  // File names should be relative to the configured object name prefix.
+  repeated string snapshot_files = 4;
+
+  // If true, will truncate the tables before importing.
+  //
+  // Deprecated - use truncate on ImportRequest instead.
+  bool truncate = 5 [deprecated = true];
+}
+
+message ImportValueEntities {
+  // Whether to import value entities.
+  bool include = 1;
+
+  // If set, overrides the files that will be used to load entities.
+  //
+  // File names should be relative to the configured object name prefix.
+  repeated string entity_files = 2;
+
+  // If true, will truncate the tables before importing.
+  // Deprecated - use truncate on ImportRequest instead.
+  bool truncate = 3 [deprecated = true];
+}
+
+// Response from Import, containing the task name to use for tracking.
+message ImportResponse {
+  // The resource name of the created import task.
+  string name = 1;
+}
+
+message GetTaskRequest {
+  // The resource name of the task to retrieve.
+  string name = 1;
+  TaskProgress progress = 2;
+}
+
+// A data management task (export or import operation).
+message Task {
+  // The resource name of the task.
+  string name = 1;
+  // The current progress of the task.
+  TaskProgress progress = 2;
+  // When the task was created.
+  google.protobuf.Timestamp created = 3;
+  // When the task was last updated.
+  google.protobuf.Timestamp updated = 4;
+  // The resource name of the user or service that created this task.
+  string principal = 5;
+}
+
+message WatchTaskRequest {
+  string name = 1;
+}
+
+message CancelTaskRequest {
+  string name = 1;
+}
+
+message TaskProgress {
+  // The status
+  TaskStatus current_status = 1;
+  // The name of the currently running task
+  string current_task_name = 2;
+  // The number of the currently running task, 1 based
+  int32 current_task_number = 3;
+  // The total number of tasks to run
+  int32 total_tasks = 4;
+  // An estimate of the percentage of work complete
+  int32 estimate_percent_complete = 5;
+  // The last error message to occur
+  string last_error = 6;
+}
+
+enum TaskStatus {
+  // Status is unset or unknown.
+  TASK_STATUS_UNSPECIFIED = 0;
+  // The task has been accepted and is waiting to start.
+  TASK_STATUS_PENDING = 1;
+  // The task is actively running.
+  TASK_STATUS_RUNNING = 2;
+  // The task completed successfully.
+  TASK_STATUS_COMPLETE = 3;
+  // The task encountered a transient error and is waiting before retrying.
+  TASK_STATUS_BACKOFF = 4;
+  // The task failed with an unrecoverable error.
+  TASK_STATUS_ERROR = 5;
+  // The task was cancelled.
+  TASK_STATUS_CANCELLED = 6;
+}
+
+message ListTasksRequest {
+  // The project or service, in format projects/<project-id>/services/<service-name>
+  string parent = 1;
+
+  int32 page_size = 2;
+  string page_token = 3;
+
+  repeated TaskStatus status = 4;
+}
+
+message ListTasksResponse {
+  repeated Task items = 1;
+
+  string next_page_token = 2;
+}

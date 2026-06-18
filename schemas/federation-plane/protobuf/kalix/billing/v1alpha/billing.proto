@@ -1,0 +1,306 @@
+syntax = "proto3";
+
+package kalix.billing.v1alpha;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+// See https://cloud.google.com/apis/design/file_structure#proto_options
+option go_package = "github.com/lightbend/kalix/cli/api/kalix/billing/v1alpha";
+option csharp_namespace = "Kalix.Billing.V1Alpha";
+option java_multiple_files = true;
+option java_outer_classname = "BillingProto";
+option java_package = "kalix.api.billing.v1alpha";
+option objc_class_prefix = "LBCSEV1AP";
+option php_namespace = "Kalix\\Billing\\V1alpha";
+
+// The billing model type associated with a billing identifier.
+enum BillingIdentifierType {
+  // The account is not charged; used for internal or complimentary accounts.
+  NO_CHARGE = 0;
+  // The account is on a time-limited trial period.
+  TRIAL = 1;
+  // The account is a paying customer account.
+  CHARGE = 2;
+  reserved 3; // Replaces: Freemium (which was removed)
+}
+
+// A billing identifier associates a user or organization with a billing account.
+message BillingIdentifier {
+  // The type of billing account.
+  BillingIdentifierType type = 1;
+  // An opaque payload identifying the billing account in the billing system.
+  string payload = 2;
+}
+
+// A postal address for billing purposes.
+message BillingAddress {
+  optional string line_1 = 1;
+  optional string line_2 = 2;
+  optional string city_or_town = 3;
+  optional string state_or_province = 4;
+  optional string postal_code = 5;
+  // ISO 3166-1 alpha-2 country code, e.g., "US", "GB".
+  optional string country = 6;
+}
+
+// Deprecated: Use BillingContactV2 instead.
+//
+// Will be removed in a future release (marked: 03/21/2025).
+message BillingContact {
+  option deprecated = true;
+
+  string name = 1;
+  string email = 2;
+  string phone = 3;
+  string address = 4;
+}
+
+// Billing contact information for an organization.
+message BillingContactV2 {
+  // The full name of the billing contact.
+  string name = 1;
+  // The email address for billing communications.
+  string email = 2;
+  // The phone number of the billing contact.
+  string phone = 3;
+  // The billing address.
+  BillingAddress address = 4;
+  reserved 5;
+}
+
+// Deprecated: Use BillingAccountV2 instead.
+message BillingAccount {
+  option deprecated = true;
+
+  BillingContact billing_contact = 1;
+  BillingIdentifier billing_identifier = 2;
+}
+
+// The status of a billing account.
+enum BillingAccountStatus {
+  // The account is active and in good standing.
+  ACTIVE = 0;
+
+  // The account is temporarily suspended, usually due to non-payment.
+  // Services may be restricted while suspended.
+  SUSPENDED = 1;
+
+  // The account has been permanently closed, usually at the customer's request.
+  CLOSED = 2;
+
+  // The account is restricted to deploying Akka demo applications only.
+  DEMO_ONLY = 3;
+}
+
+// Billing account details provided when creating a new organization.
+message CreateOrganizationBillingAccount {
+  // The billing identifier for the new organization.
+  BillingIdentifier billing_identifier = 1;
+  // The billing contact for the new organization.
+  BillingContactV2 billing_contact = 2;
+}
+
+// Full billing account details for an organization.
+message BillingAccountV2 {
+  // The billing identifier linking this account to the billing system.
+  BillingIdentifier billing_identifier = 1;
+  // The billing contact for this account.
+  BillingContactV2 billing_contact = 2;
+  // The current billing plan for this account.
+  BillingPlan billing_plan = 3;
+  // The current status of the billing account.
+  BillingAccountStatus billing_status = 4;
+  // When the billing account was last updated.
+  google.protobuf.Timestamp last_updated = 5;
+  // Whether the billing email address has been verified.
+  bool is_billing_email_verified = 6;
+  // The number of usage credits issued to this account.
+  uint32 credits_issued = 7;
+}
+
+// A billing plan that determines features and usage quotas.
+message BillingPlan {
+  // The unique identifier for this plan.
+  string plan_id = 1;
+  // The human-readable name of this plan.
+  string plan_name = 2;
+
+  // Reserved for plan description
+  reserved 3;
+}
+
+message ListBillingPlansRequest {
+  // The billing identifier payload to list plans for.
+  string billing_id = 1;
+}
+
+message ListBillingPlansResponse {
+  // The available plans that can be assigned to the billing identifier.
+  repeated BillingPlan plans = 1;
+}
+
+message GetCurrentBillingPlanRequest {
+  // The billing identifier payload to get the current plan for.
+  string billing_id = 1;
+  reserved 2;
+}
+
+message GetCurrentBillingPlanResponse {
+  // The current billing plan.
+  BillingPlan plan = 1;
+  // The current billing account status.
+  BillingAccountStatus billing_status = 2;
+}
+
+message SetNewBillingPlanRequest {
+  // The billing identifier payload to update.
+  string billing_id = 1;
+  // The ID of the plan to assign.
+  string plan_id = 2;
+}
+
+message GetBillingAccountRequest {
+  // The billing identifier payload to retrieve the account for.
+  string billing_id = 1;
+}
+
+message GetBillingAccountResponse {
+  // The full billing account details.
+  BillingAccountV2 billing_account = 1;
+  // Whether the billing email address belongs to a corporate (non-free) email domain.
+  bool is_billing_email_corporate = 2;
+  // The number of Akka compute hours per credit unit.
+  // For example, a value of 4 means 10 credits = 40 Akka hours.
+  double akka_hours_per_credit = 3;
+}
+
+message ResendBillingEmailVerificationRequest {
+  // The billing identifier payload whose verification email should be resent.
+  string billing_id = 1;
+}
+
+message VerifyBillingEmailRequest {
+  // The email verification token received in the verification email.
+  string token = 1;
+}
+
+message CheckServiceDeploymentByImageRequest {
+  // The billing identifier payload to check against.
+  string billing_id = 1;
+  // The container image tag to check.
+  string image_tag = 2;
+}
+
+// The result of a service deployment permission check.
+message CheckServiceDeploymentByImageResponse {
+  // The deployment is permitted.
+  message Permitted {}
+  // The deployment is not permitted.
+  message NotPermitted {
+    // A human-readable explanation of why the deployment is not permitted.
+    string reason = 1;
+  }
+
+  oneof result {
+    Permitted permitted = 1;
+    NotPermitted not_permitted = 2;
+  }
+}
+
+message UpdateBillingContactRequest {
+  // The billing identifier payload to update the contact for.
+  string billing_id = 1;
+  // The new billing contact information.
+  BillingContactV2 billing_contact = 2;
+}
+
+message IsBillingEmailCorporateRequest {
+  // The email address to check.
+  string email = 1;
+}
+
+message IsBillingEmailCorporateResponse {
+  // True if the email address belongs to a corporate (non-free provider) domain.
+  bool is_corporate = 1;
+}
+
+message SendCorporateEmailVerificationRequest {
+  // The billing identifier payload to send verification for.
+  string billing_id = 1;
+  // The corporate email address to verify.
+  string email_address = 2;
+  // The company name, used for personalization in the verification email.
+  optional string company_name = 3;
+  // The reason the user is signing up, used for onboarding workflows.
+  optional string signup_reason = 4;
+}
+
+message VerifyCorporateEmailRequest {
+  // The verification token received in the corporate verification email.
+  string token = 1;
+}
+
+message IsDemoAccountRequest {
+  // The billing identifier payload to check.
+  string billing_id = 1;
+}
+
+message IsDemoAccountResponse {
+  // True if the account is restricted to demo deployments only (DEMO_ONLY status).
+  bool is_demo_account = 1;
+}
+
+// The Billing API provides billing plan and account management for Kalix users and organizations.
+//
+// Authentication required: yes
+service Billing {
+  // List available billing plan upgrades.
+  //
+  // Returns the set of plans that the given billing account can upgrade to.
+  rpc ListUpgradeBillingPlans(ListBillingPlansRequest) returns (ListBillingPlansResponse) {}
+
+  // Get the current billing plan for an account.
+  rpc GetCurrentBillingPlan(GetCurrentBillingPlanRequest) returns (GetCurrentBillingPlanResponse) {}
+
+  // Set a new billing plan for an account.
+  rpc SetNewBillingPlan(SetNewBillingPlanRequest) returns (google.protobuf.Empty) {}
+
+  // Get full billing account details.
+  rpc GetBillingAccount(GetBillingAccountRequest) returns (GetBillingAccountResponse) {}
+
+  // Resend the billing email verification email.
+  //
+  // Sends a new verification email to the billing contact's email address.
+  rpc ResendBillingEmailVerification(ResendBillingEmailVerificationRequest) returns (google.protobuf.Empty) {}
+
+  // Verify the billing email address using a token from the verification email.
+  rpc VerifyBillingEmail(VerifyBillingEmailRequest) returns (google.protobuf.Empty) {}
+
+  // Check if a service deployment is permitted for an account based on image tag.
+  //
+  // Returns whether the account is permitted to deploy a service using the specified
+  // container image. Accounts with a DEMO_ONLY status may only deploy demo images.
+  rpc CheckServiceDeploymentByImage(CheckServiceDeploymentByImageRequest) returns (CheckServiceDeploymentByImageResponse) {}
+
+  // Update the billing contact information for an account.
+  rpc UpdateBillingContact(UpdateBillingContactRequest) returns (google.protobuf.Empty) {}
+
+  // Check if an email address belongs to a corporate domain.
+  //
+  // Returns whether the given email address uses a corporate (non-free provider)
+  // domain. Used to determine whether corporate email verification is required.
+  rpc IsBillingEmailCorporate(IsBillingEmailCorporateRequest) returns (IsBillingEmailCorporateResponse) {}
+
+  // Send a corporate email verification request.
+  //
+  // Initiates the corporate email verification workflow by sending a verification
+  // email to the specified corporate address.
+  rpc SendCorporateEmailVerification(SendCorporateEmailVerificationRequest) returns (google.protobuf.Empty) {}
+
+  // Verify a corporate email address using a token from the verification email.
+  rpc VerifyCorporateEmail(VerifyCorporateEmailRequest) returns (google.protobuf.Empty) {}
+
+  // Check if an account is restricted to demo deployments only.
+  rpc IsDemoAccount(IsDemoAccountRequest) returns (IsDemoAccountResponse);
+}

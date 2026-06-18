@@ -1,0 +1,1301 @@
+syntax = "proto3";
+
+package kalix.users.v1alpha;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "kalix/auth/v1alpha/auth.proto";
+
+// See https://cloud.google.com/apis/design/file_structure#proto_options
+option go_package = "github.com/lightbend/kalix/cli/api/kalix/users/v1alpha;users";
+option csharp_namespace = "Kalix.Users.V1Alpha";
+option java_multiple_files = true;
+option java_outer_classname = "UsersProto";
+option java_package = "kalix.api.users.v1alpha";
+option objc_class_prefix = "LBCSEV1AP";
+option php_namespace = "Kalix\\Users\\V1alpha";
+
+// The Users API manages user accounts, authentication, and session management.
+//
+// This API handles the full user lifecycle: registration, authentication (password,
+// OIDC, and MFA), token management, password resets, and multi-factor authentication
+// setup. It also provides the CLI device authorization flow.
+service Users {
+    // Create a user
+    rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {
+        option (google.api.http) = {
+            post: "/kalix.io/v1alpha/users"
+            body: "*"
+         };
+    }
+
+    // Log in user with either password or OIDC(OpenID Connect)
+    // Return UserTokenValue when success to log in
+    rpc Authenticate (AuthenticationRequest) returns (AuthenticationResponse) {
+        option (google.api.http) = {
+            post: "/kalix.io/v1alpha/users:authenticate"
+            body: "*"
+        };
+    }
+
+    // Get a user's profile.
+    //
+    // Returns the public profile of any user. To get the authenticated user's own
+    // full profile (including token information), use GetAuthenticatedUser instead.
+    //
+    // Authentication required: no
+    rpc GetUser (GetUserRequest) returns (User) {
+        option (google.api.http) = {
+            get: "/kalix.io/v1alpha/{name=users/*}"
+        };
+    }
+
+    // Check whether a friendly name is already taken.
+    //
+    // Returns whether the given friendly name is already in use by another user.
+    // Can be used to validate a username before registration.
+    //
+    // Authentication required: no
+    rpc CheckFriendlyNameExists (CheckFriendlyNameExistsRequest) returns (CheckFriendlyNameExistsResponse) {
+        option (google.api.http) = {
+            get: "/kalix.io/v1alpha/{friendly_name=*}"
+        };
+    }
+
+    // Get the authenticated user's full profile.
+    //
+    // Returns the current user's profile, active token details, and any pending
+    // action prompts (such as enabling MFA).
+    //
+    // Authentication required: yes
+    rpc GetAuthenticatedUser (google.protobuf.Empty) returns (AuthenticatedUser) {
+        option (google.api.http) = {
+            get: "/kalix.io/v1alpha/users/-/current"
+        };
+    }
+
+    // Watch the authenticated user for changes.
+    //
+    // Returns a stream of events representing changes to the current user's state,
+    // including profile updates, token changes, role binding changes, and more.
+    // The stream continues until the client disconnects. Use from_sequence to
+    // resume after a disconnection.
+    //
+    // Authentication required: yes
+    rpc WatchUser (WatchUserRequest) returns (stream WatchUserEvent) {
+        option (google.api.http) = {
+            get: "/kalix.io/v1alpha/users/-/current:watch"
+        };
+    }
+
+    // Verify a user's email address using the passed in verification token
+    //
+    // This can only be performed by an authenticated user.
+    rpc VerifyEmail (VerifyEmailRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/kalix.io/v1alpha/users/-/current:verifyEmail"
+        };
+    }
+
+    // Resend the verification email for a user.
+    //
+    // This can only be performed by an authenticated user.
+    rpc ResendEmailVerification (ResendEmailVerificationRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/kalix.io/v1alpha/users/-/current:resendEmailVerification"
+        };
+    }
+
+    // Send a contact or support request email.
+    //
+    // Sends an email to the Kalix support team on behalf of the authenticated user.
+    // Used for support requests and trial extension requests.
+    //
+    // Authentication required: yes
+    rpc ContactUs (ContactUsRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/kalix.io/v1alpha/users/-/current:contactUs"
+        };
+    }
+
+    // Create a refresh token
+    rpc CreateToken (CreateTokenRequest) returns (UserTokenValue) {
+        option (google.api.http) = {
+            post: "/kalix.io/v1alpha/users/-/current/tokens"
+        };
+    }
+
+    // List all server managed tokens
+    rpc ListTokens (ListTokensRequest) returns (ListTokensResponse) {
+        option (google.api.http) = {
+            get: "/kalix.io/v1alpha/parent=users/-/current/tokens"
+        };
+    }
+
+    // Delete server managed tokens
+    rpc DeleteToken (DeleteTokenRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            delete: "/kalix.io/v1alpha/{name=users/*/tokens/*/*}"
+        };
+    }
+
+    // Revoke the current session or refresh token.
+    //
+    // Invalidates the token used to make this request, effectively logging the
+    // user out from the current session.
+    //
+    // Authentication required: yes
+    rpc DeleteCurrentToken (DeleteCurrentTokenRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            delete: "/kalix.io/v1alpha/users/-/tokens/current"
+        };
+    }
+
+    // Initiate a CLI device authorization login flow.
+    //
+    // Creates a new CLI login request. The CLI tool calls this, then directs the
+    // user to the UI (via ui_redirect_url) to authorize the login in their browser.
+    // The CLI then polls WatchCliLoginResult until it receives a token or denial.
+    //
+    // Authentication required: no
+    rpc CreateCliLogin (CreateCliLoginRequest) returns (CliLogin) {
+        option (google.api.http) = {
+            post: "/kalix.io/v1alpha/login/cli"
+        };
+    }
+
+    // Get a pending CLI login request.
+    //
+    // Returns the details of a CLI login request, including the URL to redirect
+    // the user to for authorization. Used by the browser UI to display the
+    // authorization page.
+    //
+    // Authentication required: no
+    rpc GetCliLogin (GetCliLoginRequest) returns (CliLogin) {
+        option (google.api.http) = {
+            get: "/kalix.io/v1alpha/{name=login/cli/*}"
+        };
+    }
+
+    // Delete a CLI login request.
+    //
+    // Cancels and removes a pending CLI login request.
+    //
+    // Authentication required: no
+    rpc DeleteCliLogin (DeleteCliLoginRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            delete: "/kalix.io/v1alpha/{name=login/cli/*}"
+        };
+    }
+
+    // Watch a CLI login for the authorization result.
+    //
+    // Streams the result of a CLI login request. Returns a token upon successful
+    // authorization, or a denial reason if the user denied access. The stream
+    // ends when the result is available or the request expires.
+    //
+    // Authentication required: no
+    rpc WatchCliLoginResult (WatchCliLoginResultRequest) returns (stream CliLoginResult) {
+        option (google.api.http) = {
+            get: "/kalix.io/v1alpha/{name=login/cli/*}/result:watch"
+        };
+    }
+
+    // Authorize a CLI login request from the browser.
+    //
+    // Called by the browser UI when an authenticated user approves the CLI login
+    // request. This grants the CLI tool a token. If the CLI login contains an
+    // OIDC challenge, the completed challenge response must be provided here.
+    //
+    // Authentication required: yes
+    rpc AuthorizeCliLogin (AuthorizeCliLoginRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/kalix.io/v1alpha/{name=login/cli/*}:authorize"
+        };
+    }
+
+    // Deny a CLI login request from the browser.
+    //
+    // Called by the browser UI when the user chooses to deny the CLI login request.
+    //
+    // Authentication required: yes
+    rpc DenyCliLogin (DenyCliLoginRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/kalix.io/v1alpha/{name=login/cli/*}:deny"
+        };
+    }
+
+    // Create a password reset.
+    //
+    // This will email the supplied email address a password reset token.
+    rpc CreatePasswordReset (CreatePasswordResetRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/kalix.io/v1alpha/password/reset"
+        };
+    }
+
+    // Get password reset
+    //
+    // This can be used to validate a password reset request token.
+    rpc GetPasswordReset (GetPasswordResetRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            get: "/kalix.io/v1alpha/password/reset"
+        };
+    }
+
+    // Reset a users password
+    //
+    // This can be used to reset a users password given a valid token. This will return a session token for the logged
+    // in user.
+    rpc ResetPassword (ResetPasswordRequest) returns (UserTokenValue) {
+        option (google.api.http) = {
+            put: "/kalix.io/v1alpha/password/reset"
+        };
+    }
+
+    // Change a user's password
+    //
+    // This can be used to change a user's password. The user must be authenticated, and if they have an existing
+    // password set, must supply that.
+    rpc ChangePassword (ChangePasswordRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            put: "/kalix.io/v1alpha/users/-/password"
+        };
+    }
+
+    // List regions available to the authenticated user.
+    //
+    // Returns the regions available for creating projects, optionally filtered
+    // by organization. Regions represent geographic deployment locations.
+    //
+    // Authentication required: yes
+    rpc ListRegions (ListRegionsRequest) returns (ListRegionsResponse) {
+        option (google.api.http) = {
+            get: "/kalix.io/v1alpha/users/~/regions"
+        };
+    }
+
+    // List multi-tenant regions available to the authenticated user.
+    //
+    // Returns only the shared multi-tenant regions (as opposed to dedicated/private
+    // regions) available for new projects.
+    //
+    // Authentication required: yes
+    rpc ListMultiTenantRegions (google.protobuf.Empty) returns (ListRegionsResponse) {
+        option (google.api.http) = {
+            get: "/kalix.io/v1alpha/users/~/multi-tenant-regions"
+        };
+    }
+
+    // set onboarding_completed flag to true for the user
+    //
+    // This can be used to let UI decide if we need to show onboarding tutorial for the user.
+    rpc CompleteOnboarding (CompleteOnboardingRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            put: "/kalix.io/v1alpha/users/-/complete-onboarding"
+        };
+    }
+
+    // Create an elevated auth token.
+    //
+    // An elevated auth token is used to perform actions that require an elevated level of authentication, such as
+    // configuring MFA tokens etc. It requires a user entering their password. It is equivalent to displaying a
+    // password screen before showing certain configuration options.
+    //
+    // The token is valid for a limited amount of time (half an hour). It is preferable that clients cache this token,
+    // rather than the password, to perform these operations.
+    //
+    // An elevated auth token must be used in combination with another auth token, such as a session or access token.
+    // It does not replace these tokens. It is passed as part of the request message for operations that require
+    // elevated auth.
+    rpc CreateElevatedAuthToken(CreateElevatedAuthTokenRequest) returns (ElevatedAuthToken) {
+        option (google.api.http) = {
+            post: "/kalix.io/v1alpha/users/-/elevated-auth"
+            body: "*"
+        };
+    }
+
+    // List the configured authentication methods
+    rpc ListAuthenticationMethods(ListAuthenticationMethodsRequest) returns (ListAuthenticationMethodsResponse) {
+        option (google.api.http) = {
+            get: "/kalix.io/v1alpha/users/-/auth"
+        };
+    }
+
+    // Delete an authentication method
+    rpc DeleteAuthenticationMethod(DeleteAuthenticationMethodRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            delete: "/kalix.io/v1alpha/users/-/auth"
+            body: "*"
+        };
+    }
+
+    // Create an authentication method
+    rpc CreateAuthenticationMethod(CreateAuthenticationMethodRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/kalix.io/v1alpha/users/-/auth"
+            body: "*"
+        };
+    }
+
+    // Called to initiate totp registration
+    rpc InitiateTotpRegistration(InitiateTotpRegistrationRequest) returns (InitiateTotpRegistrationResponse) {
+        option (google.api.http) = {
+            post: "/kalix.io/v1alpha/users/-/totp"
+            body: "*"
+        };
+    }
+
+    // Called to initiate webauthn registration
+    rpc InitiateWebAuthnRegistration(InitiateWebAuthnRegistrationRequest) returns (InitiateWebAuthnRegistrationResponse) {
+        option (google.api.http) = {
+            post: "/kalix.io/v1alpha/users/-/webauthn"
+            body: "*"
+        };
+    }
+
+    // Called to begin existing user migration to external authentication. Returns (optionally) an
+    // `ExternalAuthenticationChallenge` which the user must complete in order to complete the migration.
+    rpc BeginUserMigrationToUserOrganization(BeginUserMigrationRequest) returns (BeginUserMigrationResponse) {
+        option (google.api.http) = {
+            post: "/kalix.io/v1alpha/users/-/beginUserMigration"
+            body: "*"
+        };
+    }
+
+    // Called to complete an existing user migration to external authentication
+    rpc CompleteUserMigrationToManagedOrganization(CompleteUserMigrationRequest) returns (CompleteUserMigrationResponse) {
+        option (google.api.http) = {
+            post: "/kalix.io/v1alpha/users/-/completeUserMigration"
+            body: "*"
+        };
+    }
+
+    // Record a user analytics tracking event.
+    //
+    // Notifies the platform that the authenticated user is active, enabling
+    // integration with product analytics tools such as Pendo. Call this when
+    // the user navigates to the UI after logging in.
+    //
+    // Authentication required: yes
+    rpc Track(google.protobuf.Empty) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/kalix.io/v1alpha/users/-/track"
+            body: "*"
+        };
+    }
+
+    // Get system information for the current platform deployment.
+    //
+    // Returns system-level information such as the platform domain and UI base URL.
+    // This is used by clients to discover platform endpoints.
+    //
+    // Authentication required: no
+    rpc GetSystemInfo(google.protobuf.Empty) returns (SystemInfo) {
+        option (google.api.http) = {
+            get: "/kalix.io/v1alpha/systeminfo"
+        };
+    }
+}
+
+// Check friendly name exists request message.
+message CheckFriendlyNameExistsRequest{
+    // The friendly name to check.
+    string friendly_name = 1;
+}
+
+// Check friendly name exists response message.
+message CheckFriendlyNameExistsResponse {
+    // The friendly name that was checked.
+    string friendly_name = 1;
+    // True if this friendly name is already taken.
+    bool taken = 2;
+}
+
+// A billing identify.
+message BillingIdentifier {
+    // Billing account type (currently: NO_CHARGE, TRIAL, CHARGE)
+    string billing_type = 1;
+    // The uuid (equal to the billing owner user uuid)
+    string payload = 2;
+}
+
+// An Akka user.
+message User {
+    reserved 5;
+    // The user resource name, in format users/<user-id>
+    string name = 1;
+
+    // The email address of the user.
+    string email = 3;
+
+    // The full name of the user.
+    string fullName = 4;
+
+    // Whether the users email address has been verified.
+    bool email_verified = 6;
+
+    // The users friendly name.
+    string friendly_name = 7;
+
+    // A billing identifier for the user.
+    BillingIdentifier billing_identifier = 8;
+
+    // The company the user works for.
+    string company = 9;
+
+    // The users job title.
+    string job_title = 10;
+
+    // Whether the user wishes to receive emails on sign up.
+    bool receive_email = 11;
+
+    // Whether the user has requested their plan be upgraded.
+    bool upgrade_plan_requested = 12;
+
+    // Whether the user has completed onboarding.
+    bool onboarding_completed = 13;
+
+    // Whether the user has MFA enabled.
+    bool mfa_enabled = 14;
+
+    // If the user has an active trial, the end date of that trial.
+    google.protobuf.Timestamp trial_end_date = 15;
+
+    // If this user is managed by an organization, the organization that manages them.
+    UserOrganization organization = 16;
+}
+
+// A users organization.
+message UserOrganization {
+    // The resource name of the organization, in format organizations/<org-id>
+    string name = 1;
+    // The resource name of the authentication domain, in format organizations/<org-id>/domains/<domain-id>
+    string authentication_domain_name = 2;
+}
+
+// An action to prompt the user to do after login.
+message UserActionPrompts {
+    // If true, UI displays enable mfa prompt
+    bool enable_mfa = 1;
+}
+
+// An authenticated user.
+message AuthenticatedUser {
+    // The user who is authenticated.
+    User user = 1;
+    // The token that the user can use for authenticated requests.
+    UserToken token = 2;
+    // Prompts to give the user after successful login.
+    UserActionPrompts user_action_prompts = 3;
+}
+
+// Create user response message.
+message CreateUserResponse {
+    User user = 1;
+    UserTokenValue token = 2;
+}
+
+// Watch user request message.
+message WatchUserRequest {
+    // Start watching from the given sequence number. If zero, starts with the projects full state, otherwise, it will
+    // start with the next event after the given sequence number. A value below zero means don't start with the full
+    // state, just receive all events after the watch starts.
+    int64 from_sequence = 2;
+}
+
+message WatchUserEvent {
+    // The resource name of the user, in format users/<user-id>
+    string name = 1;
+    // Sequence number of the event.
+    // The sequence number is guaranteed to be monotonically increasing. That is to say, it will never decrease, but
+    // multiple different consecutive events may have the same sequence number, it is not unique. Additionally, there
+    // may be gaps in the sequence number.
+    // The sequence can be tracked, so that in the event of disconnect, the stream can be resumed from where it left
+    // off using WatchProjectRequest.from_sequence.
+    int64 sequence = 2;
+
+    // The event.
+    oneof event {
+        // The user state, sent initially and when generic user attributes are updated.
+        User user = 3;
+
+        // User refresh tokens, sent initially and whenever they change.
+        UserToken token = 4;
+
+        // Sent whenever a refresh token is deleted
+        string token_deleted = 5;
+
+        // The id of a role binding that a user has or has been granted.
+        string role_binding = 6;
+
+        // The id of a role binding that has been revoked from the user.
+        string role_binding_revoked = 7;
+
+        // The email that has just been verified.
+        string email_verified = 8;
+
+        // Set if the users password has changed.
+        google.protobuf.Empty password_changed = 9;
+
+        // Set if the user has requested to upgrade their plan.
+        google.protobuf.Empty upgrade_plan_requested = 10;
+
+        // Set if the user completed onboarding.
+        google.protobuf.Empty onboarding_completed = 11;
+    }
+}
+
+// Create user request message.
+message CreateUserRequest {
+    // The user profile to create.
+    User user = 1;
+    // The authentication method.
+    oneof method {
+        // Create the user with password authentication.
+        PasswordAuthentication password = 4;
+        // Create the user via OIDC (Google implicit flow).
+        OIDCAuthentication oidc = 5;
+    }
+    // This can be set if the user is signing up in response to an invitation. If the invitation
+    // email contains an email verification token and the user signs up with the same email address,
+    // this token simultaneously verifies their email. If the email doesn't match, the token is ignored.
+    string email_verification_token = 3;
+
+    // A reCAPTCHA token to validate that the user is not a bot. Required when creating users
+    // via PasswordAuthentication.
+    string recaptcha_token = 6;
+
+    // Optional metadata for tracking and analytics purposes (e.g., UTM parameters, referral source).
+    // The contents of this field may change without notice.
+    Metadata metadata = 7;
+}
+
+// Get user request message.
+message GetUserRequest {
+    // The resource name of the user, in format users/<user-id>
+    string name = 1;
+}
+
+// Verify email request message.
+message VerifyEmailRequest {
+    // The email verification token.
+    string email_verification_token = 1;
+}
+
+// Resend email verification request message.
+message ResendEmailVerificationRequest {
+    // The email address to resend email verification to.
+    string email = 1;
+}
+
+// Information for support in a contact us request.
+message SupportInfo {
+    // Title of the support request.
+    string title = 1;
+    // The project id.
+    string project_id = 2;
+    // The name of the service.
+    string service_name = 3;
+    // The programming language being used.
+    string language = 4;
+    // The SDK being used.
+    string sdk = 5;
+    // The project build file.
+    string build_file = 6;
+    // The project docker file.
+    string docker_file = 7;
+    // The project protobuf descriptor.
+    string proto_file = 8;
+}
+
+// Contact us request message.
+message ContactUsRequest {
+    // The type of contact us request.
+    ContactUsType contact_us_type = 1;
+    // The message.
+    string message = 2;
+    // The support info.
+    SupportInfo support_info = 3;
+    // An email address to cc contact to.
+    string cc = 4;
+}
+
+// Authentication request message.
+message AuthenticationRequest {
+    // The authentication method.
+    oneof method {
+        // An attempt to authenticate with a username/password.
+        PasswordAuthentication password = 1;
+        // An attempt to authenticate using the OIDC implicit flow.
+        OIDCAuthentication oidc = 2;
+        // A TOTP code, submitted as a second factor in response to challenge issued after another authentication
+        // attempt.
+        TotpAuthentication totp = 3;
+        // An WebAuthn authentication attempt, submitted as a second factor in response to challenge issued after
+        // another authentication attempt.
+        WebAuthnAuthentication web_authn = 4;
+        // A user authentication query. No attempt at authentication is being made yet, but the server will respond
+        // with available authentication challenges for that user.
+        UserAuthenticationQuery user_query = 5;
+        // An attempt to authenticate using the OIDC code flow. This will be in response to an OIDC code authentication
+        // challenge.
+        OIDCCodeAuthentication oidc_code = 6;
+    }
+}
+
+// A regular username/password authentication attempt
+message PasswordAuthentication {
+    // The users email address or friendly name.
+    string email_or_friendly_name = 1;
+    // The users password.
+    string password = 2;
+}
+
+// An attempt to authenticate using the OIDC implicit flow.
+//
+// In this case, the client will have initiated and done the OIDC request, and received an id_token back. The server
+// will verify the id_token and login the user if verification succeeds.
+//
+// Currently, the only OIDC provider that we support for the OIDC implicit flow is Google.
+message OIDCAuthentication {
+    // The OIDC ID token.
+    string id_token = 1;
+}
+
+// An attempt to authenticate using the OIDC code flow.
+//
+// The OIDC code flow is always initiated by the server, by returning an OIDCCodeChallenge in response to a
+// UserAuthenticationQuery or PasswordAuthentication attempt.
+message OIDCCodeAuthentication {
+    reserved 4;
+    // The OIDC code.
+    string code = 1;
+    // The token to identify this flow.
+    //
+    // This should be the same token that was returned by the OIDCCodeChallenge. It should be stored in the browsers
+    // local state, and retrieved from there to send with this request.
+    string token = 2;
+    // The `redirect_uri` passed to the authorization request. REQUIRED, as per the OIDC specification.
+    string redirect_uri = 3;
+}
+
+// A TOTP authentication attempt.
+message TotpAuthentication {
+    // The token that identifies this authentication attempt.
+    string authentication_token = 1;
+    // The id of the totp authentication method
+    string id = 2;
+    // The TOTP code
+    uint32 code = 3;
+}
+
+// A WebAuthn authentication attempt.
+message WebAuthnAuthentication {
+    // The token that identifies this authentication attempt. This should come from the AuthenticationChallenge token
+    // field.
+    string authentication_token = 1;
+
+    // The WebAuthn token that identifies this WebAuthn authentication attempt. This should come from the
+    // WebAuthnChallenge web_authn_challenge_token field.
+    string web_authn_challenge_token = 3;
+
+    // The PublicKeyCredential object returned by the navigator.credentials.get call, encoded as JSON, as described by
+    // https://webauthn.guide/#authentication
+    string public_key_credential_json = 4;
+
+}
+
+// An external authentication attempt.
+message ExternalAuthentication {
+    // The type of the external authentication attempt.
+    oneof sealed_value {
+        // An OIDC code authentication attempt.
+        OIDCCodeAuthentication oidc_code = 1;
+    }
+}
+
+// A user authentication query.
+//
+// This is used to query what types of authentication are available. Its primary purpose is for obtaining challenges
+// for an SSO provider in the case where login of a given domain is restricted to just using that SSO provider.
+message UserAuthenticationQuery {
+    // The email address or friendly name of the user.
+    string email_or_friendly_name = 1;
+}
+
+// Create token request message.
+message CreateTokenRequest {
+    // A description of the token.
+    string description = 1;
+    // CreateToken should only be used to create refresh tokens, support for creating access tokens will eventually
+    // be removed
+    UserTokenType token_type = 2 [deprecated = true];
+    // The scopes that the token should have. Must be a subset of the scopes that the currently authenticating token
+    // has.
+    repeated kalix.auth.v1alpha.TokenScope scopes = 3;
+}
+
+// List tokens request message.
+message ListTokensRequest {
+    // The maximum number of tokens to return per page.
+    int32 page_size = 1;
+    // The page token from a previous response to retrieve the next page.
+    string page_token = 2;
+}
+
+// List tokens response message.
+message ListTokensResponse {
+    // The tokens.
+    repeated UserToken tokens = 1;
+    // Token to retrieve the next page of results; empty if there are no more results.
+    string next_page_token = 2;
+}
+
+// Delete token request message.
+message DeleteTokenRequest {
+    // The resource name of the token, in format users/<user-id>/tokens/<token-id>
+    string name = 1;
+}
+
+// Delete current token request message.
+message DeleteCurrentTokenRequest {
+}
+
+// A user token type.
+enum UserTokenType {
+    // A long lived persistent token. Can only be used to create session tokens.
+    // Can be revoked.
+    REFRESH = 0;
+
+    // A short lived token that can be obtained using a REFRESH token. Can't be
+    // revoked.
+    ACCESS = 1;
+
+    // A medium lived token, used for web access etc. Stays active as long as its
+    // used. Can be revoked.
+    SESSION = 2;
+}
+
+// The type of contact us request.
+enum ContactUsType {
+    // send out contact support email
+    CONTACT_SUPPORT = 0;
+
+    // send out request trial extension email
+    REQUEST_TRIAL_EXTENSION = 1;
+}
+
+// A user token.
+message UserToken {
+    // The resource name of the token, in format users/<user-id>/tokens/<token-id>
+    string name = 1;
+    // A description of the token.
+    string description = 2;
+    // The time the token was created.
+    google.protobuf.Timestamp created_time = 3;
+    // The time the token will expire, if it does expire.
+    google.protobuf.Timestamp expire_time = 4;
+    // The type of the token.
+    UserTokenType token_type = 5;
+    // The scopes that the token has.
+    repeated kalix.auth.v1alpha.TokenScope scopes = 6;
+}
+
+// Authentication response message.
+message AuthenticationResponse {
+    reserved 1, 2;
+    // The authentication result.
+    oneof result {
+        // A successful authentication attempt.
+        UserTokenValue success = 3;
+        // An authentication challenge.
+        AuthenticationChallenge challenge = 4;
+    }
+}
+
+// A user token with the value of the token.
+message UserTokenValue {
+    // The token metadata.
+    UserToken token = 1;
+    // The token itself.
+    string value = 2;
+    // Zero or more optional/required user actions after successful login.
+    repeated PostLoginAction post_login_actions = 3;
+}
+
+// An authentication challenge.
+message AuthenticationChallenge {
+    // A short-lived token identifying the authentication attempt. Must be submitted with authentication challenge
+    // answers.
+    string token = 1;
+    // One or more methods that may be used to answer the challenge.
+    repeated AuthenticationChallengeMethod methods = 2;
+}
+
+// An authentication challenge method.
+message AuthenticationChallengeMethod {
+    // The authentication challenge method.
+    oneof sealed_value {
+        // A TOTP 2FA challenge.
+        TotpChallenge totp = 1;
+        // A WebAuthn 2FA challenge.
+        WebAuthnChallenge web_authn = 2;
+        // A local, username and password authentication challenge.
+        LocalAuthChallenge local_auth = 3;
+        // An OIDC code authentication challenge.
+        OIDCCodeChallenge oidc_code = 4;
+    }
+}
+
+// A TOTP 2FA authentication challenge.
+message TotpChallenge {
+    // The id of the TOTP method
+    string id = 1;
+    // The user specified description of this TOTP device.
+    string device_description = 2;
+    // The number of digits.
+    uint32 digits = 3;
+}
+
+// A WebAuthn authentication challenge.
+message WebAuthnChallenge {
+    // The publicKeyCredentialRequestOptions to pass to navigator.credentials.get, encoded as JSON, as described by
+    // https://webauthn.guide/#authentication
+    string public_key_credential_request_options_json = 1;
+
+    // A token associated with this challenge that must be submitted back with the answer.
+    string web_authn_challenge_token = 2;
+}
+
+// The user should attempt to log in with a local authentication method.
+//
+// Local authentication means authentication methods that are managed by Kalix, rather than an authentication method
+// that is managed by a Kalix organization. They include username/password, as well as the Google implicit OIDC auth
+// flow.
+//
+// Note, receiving this challenge does not indicate that the user exists.
+message LocalAuthChallenge {
+}
+
+// The user should attempt to log in using an OIDC provider using the code flow.
+//
+// This will be returned for users that are managed by a third party OIDC provider, or in cases where a user doesn't
+// exist but the email address they've attempted to log in using is at a domain that is configured by a third party
+// OIDC provider. It does not indicate that a user with that email address exists.
+message OIDCCodeChallenge {
+    reserved 6;
+    // The OpenID authorization endpoint. This is the URL that is used to build the redirect URI that the user will
+    // be redirected to to authenticate with the OIDC provider and authorize login.
+    string authorization_endpoint = 1;
+    // The OIDC client ID, which should be passed to the authentication endpoint.
+    string client_id = 2;
+    // The scopes to request, which should be passed to the authentication endpoint.
+    repeated string scopes = 3;
+    // The one-time-code ("number once") which should be passed to the authentication code endpoint
+    string nonce = 4;
+    // The token.
+    //
+    // The token should be stored in the clients local storage, and passed along with the OIDCCodeAuthentication when
+    // the authorization request is complete.
+    string token = 5;
+}
+
+// An external authentication challenge.
+message ExternalAuthenticationChallenge {
+    // The authentication challenge method.
+    oneof authentication_method {
+        // An OIDC cod echallenge.
+        OIDCCodeChallenge oidc_code = 1;
+    }
+}
+
+// Request message for initiating a CLI login.
+message CreateCliLoginRequest {
+    // The hostname of the client that login is being initiated from.
+    // This will be used to help identify where the login has come from when authorizing the login.
+    string hostname = 1;
+}
+
+// Request message for retrieving a CLI login.
+message GetCliLoginRequest {
+    // The resource name of the CLI login, in the format login/cli/<token>
+    string name = 1;
+}
+
+// A CLI login.
+message CliLogin {
+    // The resource name of the CLI login, in the format login/cli/<token>
+    string name = 1;
+    // The hostname of the client that is initiating the login.
+    string hostname = 2;
+    // The IP address of the client that is initiating the login.
+    string ip = 3;
+    // The expiry time of the login token.
+    google.protobuf.Timestamp expire_time = 4;
+    // The URL that the CLI should direct the user to in order to authorize the login.
+    string ui_redirect_url = 5;
+    // If the current users SSO provider needs to grant offline access to the token, this challenge may be set.
+    oneof challenge {
+        // An OIDC code challenge.
+        OIDCCodeChallenge oidc_code = 6;
+    }
+}
+
+// Delete CLI login request message.
+message DeleteCliLoginRequest {
+    // The resource name of the CLI login, in the format login/cli/<token>
+    string name = 1;
+}
+
+// Watch CLI login result request message.
+message WatchCliLoginResultRequest {
+    // The resource name of the CLI login, in the format login/cli/<token>
+    string name = 1;
+}
+
+// The result of a CLI login.
+message CliLoginResult {
+    // The resource name of the CLI login, in the format login/cli/<token>
+    string name = 1;
+    // The result.
+    oneof result {
+        // A successful CLI login authorization, which contains the refresh token that the CLI can use to authenticate.
+        UserTokenValue token = 2;
+        // A denied CLI login, describing the reason it was denied.
+        string denied_reason = 3;
+    }
+}
+
+// Authorize CLI login request message.
+message AuthorizeCliLoginRequest {
+    // The resource name of the CLI login, in the format login/cli/<token>
+    string name = 1;
+    // If the CliLogin contained a challenge, the response to the challenge must be set here.
+    oneof challenge_response {
+        // An OIDC code challenge response.
+        OIDCCodeAuthentication oidc_code = 2;
+    }
+}
+
+// Deny CLI login request message.
+message DenyCliLoginRequest {
+    // The resource name of the CLI login, in the format login/cli/<token>
+    string name = 1;
+    // The reason the CLI login is being denied.
+    string reason = 2;
+}
+
+// Create password reset request message.
+message CreatePasswordResetRequest {
+    // The email address of the user whose password is to be reset.
+    string email = 1;
+}
+
+// Get password reset request message.
+message GetPasswordResetRequest {
+    // The password reset token.
+    string token = 1;
+}
+
+// Reset password request message.
+message ResetPasswordRequest {
+    // The password reset token.
+    string token = 1;
+    // The new password.
+    string password = 2;
+}
+
+// Change password request message.
+message ChangePasswordRequest {
+    // The users old password.
+    string old_password = 1;
+    // The users new password.
+    string new_password = 2;
+}
+
+// Complete onboarding request message.
+message CompleteOnboardingRequest {
+}
+
+// A region that the user has access to.
+message Region {
+    // The name of the region, eg gcp-us-east1
+    string name = 1;
+    // The ID of the organization that has access to the region.
+    // Deprecated: use organization_name instead.
+    string organization_id = 2 [deprecated=true];
+    // The resource name of the organization that has access to the region, in format organizations/<org-id>.
+    string organization_name = 6;
+    // The container registry for the region.
+    string container_registry = 3;
+    // The cloud provider of the region
+    string provider = 4;
+    // The cloud provider's region.
+    string data_center = 5;
+}
+
+// List regions request message.
+message ListRegionsResponse {
+    // The regions.
+    repeated Region regions = 1;
+    // Token to retrieve the next page of results; empty if there are no more results.
+    string next_page_token = 2;
+}
+
+// List regions request message.
+message ListRegionsRequest {
+    // The ID of the organization that has access to the regions.
+    // Deprecated: use organization_name instead.
+    string organization_id = 1 [deprecated=true];
+    // The resource name of the organization that has access to the region, in format organizations/<org-id>.
+    string organization_name = 2;
+    // The maximum number of regions to return per page.
+    int32 page_size = 3;
+    // The page token from a previous response to retrieve the next page.
+    string page_token = 4;
+}
+
+// Create elevated auth token request message.
+message CreateElevatedAuthTokenRequest {
+    // The users password.
+    string password = 1;
+}
+
+// An elevated auth token.
+message ElevatedAuthToken {
+    // The token itself.
+    string token = 1;
+    // The time the token will expire.
+    google.protobuf.Timestamp expire_time = 2;
+}
+
+// List authentication methods request message.
+message ListAuthenticationMethodsRequest {
+    reserved 1;
+    reserved "elevated_auth_token";
+    // The maximum number of authentication methods to return per page.
+    int32 page_size = 2;
+    // The page token from a previous response to retrieve the next page.
+    string page_token = 3;
+}
+
+// List authentication methods response message.
+message ListAuthenticationMethodsResponse {
+    // The authentication methods.
+    repeated AuthenticationMethod methods = 1;
+    // Token to retrieve the next page of results; empty if there are no more results.
+    string next_page_token = 2;
+}
+
+// An authentication method.
+message AuthenticationMethod {
+    // The authentication method values.
+    oneof sealed_value {
+        // Password based authentication.
+        PasswordAuthenticationMethod password = 2;
+        // OIDC authentication.
+        OIDCAuthenticationMethod oidc = 3;
+        // TOTP authentication.
+        TotpAuthenticationMethod totp = 4;
+        // WebAuthn authentication.
+        WebAuthnAuthenticationMethod web_authn = 5;
+        // Organization domain authentication.
+        OrganizationDomainMethod organization_domain = 6;
+    }
+}
+
+// A password based authentication method.
+message PasswordAuthenticationMethod {
+    // The time that the password was last changed.
+    google.protobuf.Timestamp last_changed = 1;
+}
+
+// An OIDC authentication method.
+message OIDCAuthenticationMethod {
+    // OIDC issuer.
+    string issuer = 1;
+    // The OIDC subject.
+    string subject = 2;
+    // A description of the OIDC authentication.
+    string description = 3;
+}
+
+// A TOTP authentication method.
+message TotpAuthenticationMethod {
+    // The id of the TOTP method.
+    string id = 1;
+    // A user specified description of this TOTP device.
+    string device_description = 2;
+}
+
+// A WebAuthn authentication method.
+message WebAuthnAuthenticationMethod {
+    // The id of the WebAuthn key.
+    bytes key_id = 1;
+    // A user specified description of this WebAuthn device.
+    string device_description = 2;
+}
+
+// An organization domain authentication method.
+message OrganizationDomainMethod {
+    // The resource name of the authentication domain, in format organizations/<org-id>/domains/<domain-id>
+    string authentication_domain_name = 1;
+    // The friendly name of the organization
+    string organization_friendly_name = 2;
+}
+
+// Delete authentication method request message.
+message DeleteAuthenticationMethodRequest {
+    // The authentication method to delete.
+    AuthenticationMethod method = 1;
+    // The elevated auth token.
+    string elevated_auth_token = 2;
+}
+
+// Create an authentication method request message.
+message CreateAuthenticationMethodRequest {
+    // The authentication method to create.
+    AuthenticationMethodRegistration method = 1;
+    // The elevated auth token.
+    string elevated_auth_token = 2;
+}
+
+// Initiate TOTP registration request message.
+message InitiateTotpRegistrationRequest {
+    // The elevated auth token.
+    string elevated_auth_token = 1;
+}
+
+// Initiate TOTP registration response message.
+message InitiateTotpRegistrationResponse {
+    // The TOTP URI. This should be rendered as a QR code and displayed to the user so that they can register
+    // it with their device.
+    string totp_uri = 1;
+
+    // A token that should be submitted when creating the TOTP authentication method.
+    string totp_registration_token = 2;
+
+    // The number of digits the user needs to enter
+    int32 digits = 3;
+}
+
+// A TOTP authentication registration.
+message TotpAuthenticationRegistration {
+    // A user specified description of this TOTP device
+    string device_description = 1;
+
+    // A token that was returned by an InitiateTotpRegistration request.
+    string totp_registration_token = 2;
+
+    // A code for the URI from the same InitiateTotpRegistration request.
+    uint32 code = 3;
+}
+
+// Initiate WebAuthn registration request message.
+message InitiateWebAuthnRegistrationRequest {
+    // The elevated auth token.
+    string elevated_auth_token = 1;
+}
+
+// Initiate WebAuthn registration response message.
+message InitiateWebAuthnRegistrationResponse {
+    // The publicKeyCredentialCreationOptions to pass to navigator.credentials.create, encoded as JSON, as described
+    // in https://webauthn.guide/#registration.
+    string public_key_credential_creation_options_json = 1;
+
+    // A token that should be submitted when creating the WebAuthn authentication method.
+    string web_authn_registration_token = 2;
+}
+
+// A WebAuthn authentication registration.
+message WebAuthnAuthenticationRegistration {
+    // A user specified description of this WebAuthn device
+    string description = 1;
+
+    // A token that was returned by an InitiateWebAuthnRegistration request.
+    string web_authn_registration_token = 2;
+
+    // The PublicKeyCredential object returned by the navigator.credentials.create call, encoded as JSON, as described
+    // in https://webauthn.guide/#registration.
+    string public_key_credential_json = 3;
+}
+
+// A registration of an authentication method.
+message AuthenticationMethodRegistration {
+    // The authentication method registration.
+    oneof sealed_value {
+        // A TOTP authentication registration.
+        TotpAuthenticationRegistration totp = 1;
+        // A WebAuthn authentication registration.
+        WebAuthnAuthenticationRegistration web_authn = 2;
+    }
+}
+
+// Begin user migration request message.
+message BeginUserMigrationRequest {
+    // The organization (and auth domain_id) that the user will use to authenticate
+    string authentication_domain_name = 1;
+}
+
+// Begin user migration response message.
+message BeginUserMigrationResponse {
+    // The external authentication session to use to complete the migration
+    ExternalAuthenticationChallenge challenge = 1;
+}
+
+// Complete user migration request message.
+message CompleteUserMigrationRequest {
+    // The completed external authentication to use to verify and perform the user's migration
+    ExternalAuthentication external_authentication = 1;
+}
+
+// Complete user migration response message.
+message CompleteUserMigrationResponse {
+    // The new user session token to use since the migration
+    UserTokenValue updated_token = 1;
+}
+
+// Metadata entry
+message MetadataEntry {
+    // The metadata key
+    string key = 1;
+    // The metadata value
+    string value = 2;
+}
+
+// Metadata
+message Metadata {
+    // The entries
+    repeated MetadataEntry entry = 1;
+}
+
+///
+// Post Login Actions
+///
+
+// A post login action.
+message PostLoginAction {
+    // The action.
+    oneof sealed_value {
+        // An action to request that the user needs to migrate their account to be managed by an organization.
+        MigrateToManagedOrganization user_migration = 1;
+    }
+}
+
+// Informs the user that their user account can be migrated to an organization with external authentication
+message MigrateToManagedOrganization {
+    // The resource name of the authentication domain, in format organizations/<org-id>/domains/<domain-id>
+    string authentication_domain_name = 1;
+    // The friendly name of the organization
+    string org_friendly_name = 2;
+}
+
+// System information
+message SystemInfo {
+    // The system domain, eg, akka.io
+    string system_domain = 1;
+    // The base URL for the UI, eg, https://console.akka.io
+    string ui_base_url = 2;
+}

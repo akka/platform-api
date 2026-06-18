@@ -1,0 +1,801 @@
+syntax = "proto3";
+
+package kalix.organizations.v1alpha;
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/field_mask.proto";
+import "kalix/billing/v1alpha/billing.proto";
+
+// See https://cloud.google.com/apis/design/file_structure#proto_options
+option go_package = "github.com/lightbend/kalix/cli/api/kalix/organizations/v1alpha;organizations";
+option csharp_namespace = "Kalix.Projects.V1Alpha";
+option java_multiple_files = true;
+option java_outer_classname = "ProjectsProto";
+option java_package = "kalix.api.organizations.v1alpha";
+option objc_class_prefix = "LBCSEV1AP";
+option php_namespace = "Kalix\\Projects\\V1alpha";
+
+// The Organizations API manages organizations, their membership, and SSO configuration.
+//
+// Organizations group users and projects under a shared billing account and allow
+// centralized control over access, SSO configuration, and security policies.
+//
+// Authentication required: yes (for most operations)
+service Organizations {
+
+  // Invite a user to join an organization.
+  //
+  // Sends an invitation email to the specified email address. If the user accepts,
+  // they will be granted the specified role in the organization.
+  //
+  // Authentication required: yes
+  // Organization roles required: superuser
+  rpc CreateOrganizationInvitation(CreateOrganizationInvitationRequest)
+      returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post : "/kalix.io/v1alpha/"
+          "{parent=organizations/*}/invitations"
+    };
+  }
+
+  // Accept an organization invitation.
+  //
+  // Accepts a pending invitation, adding the authenticated user to the organization
+  // with the role specified in the invitation.
+  //
+  // Authentication required: yes
+  rpc AcceptOrganizationInvitation(AcceptOrganizationInvitationRequest)
+      returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post : "/kalix.io/v1alpha/{name=organizations/*/"
+          "invitations/*}:accept"
+    };
+  }
+
+  // List all organizations the authenticated user belongs to.
+  //
+  // Returns all organizations in which the current user has a role binding,
+  // along with the roles held in each organization.
+  //
+  // Authentication required: yes
+  rpc ListOrganizations(ListOrganizationsRequest)
+      returns (ListOrganizationsResponse) {
+    option (google.api.http) = {
+      post : "/kalix.io/v1alpha/organizations"
+    };
+  }
+
+  // Get an organization.
+  //
+  // Returns the organization details visible to the authenticated user's role.
+  //
+  // Authentication required: yes
+  // Organization roles required: any
+  rpc GetOrganization(GetOrganizationRequest) returns (Organization) {
+    option (google.api.http) = {
+      get : "/kalix.io/v1alpha/{name=organizations/*}"
+    };
+  }
+
+  // List organizations for which the user has billing administration access.
+  //
+  // Returns all organizations where the authenticated user has the BillingAdmin role.
+  // Supports filtering to exclude trial organizations.
+  //
+  // Authentication required: yes
+  rpc ListAdministeredBillingOrganizations(ListAdministeredBillingOrganizationsRequest)
+      returns (ListAdministeredBillingOrganizationsResponse) {
+    option (google.api.http) = {
+      get : "/kalix.io/v1alpha/billing-organizations"
+    };
+  }
+
+  // List all role bindings for an organization.
+  //
+  // Returns all members and their roles in the organization.
+  //
+  // Authentication required: yes
+  // Organization roles required: superuser
+  rpc ListRoleBindings(ListRoleBindingsRequest)
+      returns (ListRoleBindingsResponse) {
+    option (google.api.http) = {
+      get : "/kalix.io/v1alpha/"
+          "{parent=organizations/*}/roles/-/bindings"
+    };
+  }
+
+  // List pending invitations for an organization.
+  //
+  // Returns all invitations that have been sent but not yet accepted or cancelled.
+  //
+  // Authentication required: yes
+  // Organization roles required: superuser
+  rpc ListPendingInvitations(ListPendingInvitationsRequest)
+      returns (ListPendingInvitationsResponse) {
+    option (google.api.http) = {
+      get : "/kalix.io/v1alpha/"
+          "{parent=organizations/*}/pending-invitations"
+    };
+  }
+
+  // Cancel a pending invitation by email address.
+  //
+  // Cancels and removes a pending invitation for the specified email address.
+  //
+  // Authentication required: yes
+  // Organization roles required: superuser
+  rpc CancelOrganizationInvitationByEmail(CancelOrganizationInvitationByEmailRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete : "/kalix.io/v1alpha/"
+          "{parent=organizations/*}/pending-invitations/{email}"
+    };
+  }
+  // Create a role binding.
+  //
+  // Authentication required: yes
+  // Organization roles required: superuser
+  rpc CreateRoleBinding(CreateRoleBindingRequest) returns (RoleBinding) {
+    option (google.api.http) = {
+      post : "/kalix.io/v1alpha/{parent=organizations/*/roles/*}/bindings"
+      body : "role_binding"
+    };
+  }
+
+  // Delete a role binding.
+  //
+  // Authentication required: yes
+  // Organization roles required: superuser
+  rpc DeleteRoleBinding(DeleteRoleBindingRequest)
+      returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete : "/kalix.io/v1alpha/{name=organizations/*/roles/*/bindings/*}"
+    };
+  }
+
+  // List SSO authentication domains for this organization.
+  //
+  // Authentication required: yes
+  // Organization roles required: superuser
+  rpc ListAuthenticationDomains(ListAuthenticationDomainsRequest) returns (ListAuthenticationDomainsResponse) {
+    option (google.api.http) = {
+      get: "/kalix.io/v1alpha/{parent=organizations/*}/domains"
+    };
+  }
+
+  // Create an SSO authentication domain for this organization.
+  //
+  // Authentication required: yes
+  // Organization roles required: superuser
+  rpc CreateAuthenticationDomain(CreateAuthenticationDomainRequest) returns (AuthenticationDomain) {
+    option (google.api.http) = {
+      post: "/kalix.io/v1alpha/{parent=organizations/*}/domains"
+      body: "authentication_domain"
+    };
+  }
+
+  // Update an SSO authentication domain for this organization.
+  //
+  // Authentication required: yes
+  // Organization roles required: superuser
+  rpc UpdateAuthenticationDomain(UpdateAuthenticationDomainRequest) returns (AuthenticationDomain) {
+    option (google.api.http) = {
+      put: "/kalix.io/v1alpha/{name=organizations/*/domains/*}"
+      body: "authentication_domain"
+    };
+  }
+
+  // Get a challenge for an authentication domain test
+  rpc GetAuthenticationDomainTestChallenge (GetAuthenticationDomainTestChallengeRequest) returns (AuthenticationDomainTestChallenge) {
+    option (google.api.http) = {
+      get: "/kalix.io/v1alpha/{name=organizations/*/domains/*}/test"
+    };
+  }
+
+  // Perform an authentication domain test
+  rpc PerformAuthenticationDomainTest (PerformAuthenticationDomainTestRequest) returns (AuthenticationDomainTestResult) {
+    option (google.api.http) = {
+      post: "/kalix.io/v1alpha/{name=organizations/*/domains/*}/test"
+      body: "*"
+    };
+  }
+
+  // Delete an SSO authentication domain from this organization.
+  //
+  // Authentication required: yes
+  // Organization roles required: superuser
+  rpc DeleteAuthenticationDomain(DeleteAuthenticationDomainRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/kalix.io/v1alpha/{name=organizations/*/domains/*}"
+    };
+  }
+
+  // Get all permissions the authenticated user has on an organization.
+  //
+  // Returns the user's roles and the full set of permissions those roles grant
+  // on the specified organization.
+  //
+  // Authentication required: yes
+  rpc GetUserPermissions(GetUserPermissionsRequest) returns (GetUserPermissionsResponse) {
+    option (google.api.http) = {
+      get: "/kalix.io/v1alpha/{parent=organizations/*}/permissions"
+    };
+  }
+
+  // Check whether the authenticated user has a specific permission on an organization.
+  //
+  // Returns the result of a single permission check for the authenticated user
+  // on the specified organization.
+  //
+  // Authentication required: yes
+  rpc CheckUserPermission(CheckUserPermissionRequest) returns (CheckUserPermissionResponse) {
+    option (google.api.http) = {
+      get: "/kalix.io/v1alpha/{parent=organizations/*}/permissions:check"
+    };
+  }
+}
+
+// Creation organization invitation request message.
+message CreateOrganizationInvitationRequest {
+  // The resource name of the organization, in format organizations/<org-id>.
+  string parent = 1;
+  // The email address to invite.
+  string email = 2;
+  // The role to grant upon acceptance.
+  string role = 3;
+}
+
+// Accept organization invitation request message
+message AcceptOrganizationInvitationRequest {
+  // The resource name of the invitation, in format organizations/<org-id>/invitations/<invitation-id>.
+  string name = 1;
+  // An optional email verification token. If the user is signing up with the same
+  // email as the invitation, this token verifies their email address at the same time.
+  string email_verification_token = 2;
+}
+
+// List organizations request message.
+message ListOrganizationsRequest {
+}
+
+// List organizations response message.
+message ListOrganizationsResponse {
+  // The organizations the authenticated user belongs to, with their roles in each.
+  repeated OrganizationAndRoles organizations = 1;
+}
+
+// Get organization request message.
+message GetOrganizationRequest {
+  // The resource name of the organization, in format organizations/<org-id>.
+  string name = 1;
+}
+
+// List administered billing organizations request message.
+message ListAdministeredBillingOrganizationsRequest {
+  // Maximum number of organizations to return per page.
+  int32 page_size = 1;
+  // Page token from a previous response to retrieve the next page.
+  string page_token = 2;
+  // If true, organizations on a trial plan are excluded from the results.
+  bool exclude_trials = 3;
+}
+
+// List administered billing organizations response message.
+message ListAdministeredBillingOrganizationsResponse {
+  // The organizations that the user is a billing admin of.
+  repeated OrganizationAndRoles organizations = 1;
+  // Token to retrieve the next page of results; empty if there are no more results.
+  string next_page_token = 2;
+}
+
+// List role bindings request message.
+message ListRoleBindingsRequest {
+  // The resource name of the organization, in format organizations/<org-id>.
+  string parent = 1;
+  // The maximum number of role bindings to return per page.
+  int32 page_size = 2;
+  // The page token from a previous response to retrieve the next page.
+  string page_token = 3;
+}
+
+// List role bindings response message.
+message ListRoleBindingsResponse {
+  // The role bindings in the organization.
+  repeated RoleBinding role_bindings = 1;
+  // Token to retrieve the next page of results; empty if there are no more results.
+  string next_page_token = 2;
+}
+
+// List pending invitations request message.
+message ListPendingInvitationsRequest {
+  // The resource name of the organization, in format organizations/<org-id>.
+  string parent = 1;
+  // The maximum number of invitations to return per page.
+  int32 page_size = 2;
+  // The page token from a previous response to retrieve the next page.
+  string page_token = 3;
+}
+
+// Cancel organization invitation by email request message.
+message CancelOrganizationInvitationByEmailRequest {
+  // The resource name of the organization, in format organizations/<org-id>.
+  string parent = 1;
+  // The email address of the invitation to cancel.
+  string email = 2;
+}
+
+// List pending invitations response message.
+message ListPendingInvitationsResponse {
+  // The pending invitations in the organization.
+  repeated Invitation pending_invitations = 1;
+  // Token to retrieve the next page of results; empty if there are no more results.
+  string next_page_token = 2;
+}
+
+// Create role binding request message.
+message CreateRoleBindingRequest {
+  // The resource name of the organization, in format organizations/<org-id>.
+  string parent = 1;
+  // The role binding to create.
+  RoleBinding role_binding = 2;
+}
+
+// Delete role binding request message.
+message DeleteRoleBindingRequest {
+  // The resource name of the role binding, in format organizations/<org-id>/roles/<role-id>/bindings/<binding-id>.
+  string name = 1;
+}
+
+// The security settings for the organization.
+message SecuritySettings {
+  // Whether Multi-Factor authentication should be enforced in this organization.
+  bool enforce_mfa = 1;
+}
+
+// An organization.
+message Organization {
+  // The resource name of the organization, in format organizations/<org-id>.
+  string name = 1;
+  // The friendly name of the organization.
+  string friendly_name = 2;
+  // The contract number for the organization.
+  string contract_number = 3;
+  // The security settings for the organization.
+  SecuritySettings security_settings = 4;
+  // When the organization was created.
+  google.protobuf.Timestamp created_at = 5;
+  // for removed `billing_type`
+  reserved 6;
+  reserved "billing_type";
+  // The list of regions that are available to this organization.
+  repeated Region regions = 7;
+  // The list of authentication domains that this organization provides.
+  repeated AuthenticationDomain auth_domains = 8;
+  // Will be removed in a future release
+  kalix.billing.v1alpha.BillingIdentifier billing_identifier = 9 [deprecated = true];
+  // The billing account.
+  kalix.billing.v1alpha.BillingAccountV2 billing_account = 10;
+}
+
+// An organization together with the authenticated user's roles in it.
+message OrganizationAndRoles {
+  // The organization
+  Organization organization = 1;
+  // The roles the authenticated user holds in this organization.
+  repeated string role = 2;
+  // A token that can be used to make billing API calls on behalf of this organization.
+  string billing_auth_token = 3;
+}
+
+// A binding of a role to a principal in an organization.
+message RoleBinding {
+  reserved 1,2,3;
+  // Output only. Email of the user.
+  string user_email = 4;
+  // Output only. Full name of the user.
+  string user_full_name = 5;
+  // Output only. Friendly Name of the user or organization
+  string principal_friendly_name = 6;
+  // Name of the binding in format organization/{orgid}/roles/{roleid}/bindings/{bindingid}
+  string name = 7;
+  // Name of the principal in format users/{userid} or organizations/{orgid}/groups/{groupid}
+  string principal = 8;
+  // Whether the user has MFA enabled.
+  bool mfa_enabled = 9;
+}
+
+// An invitation to join an organization.
+message Invitation {
+  // The id of the invitation.
+  string id = 1;
+  // The email address of the user to join.
+  string email = 2;
+  // The role the user will be granted if they accept the invitation.
+  string role = 3;
+  // When the invitation was created.
+  google.protobuf.Timestamp created_at = 4;
+}
+
+// List authentication domains request message.
+message ListAuthenticationDomainsRequest {
+  // The resource name of the organization, in format organizations/<org-id>.
+  string parent = 1;
+  // The maximum number of authentication domains to return per page.
+  int32 page_size = 2;
+  // The page token from a previous response to retrieve the next page.
+  string page_token = 3;
+}
+
+// List authentication domains response message.
+message ListAuthenticationDomainsResponse {
+  // The authentication domains in the organization.
+  repeated AuthenticationDomain domains = 1;
+  // Token to retrieve the next page of results; empty if there are no more results.
+  string next_page_token = 2;
+}
+
+// Create authentication domain request message.
+message CreateAuthenticationDomainRequest {
+  // The resource name of the organization, in format organizations/<org-id>.
+  string parent = 1;
+  // The authentication domain to create.
+  AuthenticationDomain authentication_domain = 2;
+}
+
+// Update authentication domain request message.
+message UpdateAuthenticationDomainRequest {
+  // The resource name of the authentication domain, in format organizations/<org-id>/domains/<domain-id>.
+  string name = 1;
+  // The authentication domain to update.
+  AuthenticationDomain authentication_domain = 2;
+  // The fields to update.
+  google.protobuf.FieldMask update_mask = 3;
+}
+
+// Delete authentication domain request message.
+message DeleteAuthenticationDomainRequest {
+  // The resource name of the authentication domain, in format organizations/<org-id>/domains/<domain-id>.
+  string name = 1;
+}
+
+// An SSO authentication domain.
+message AuthenticationDomain {
+  // The resource name of the authentication domain, in format organizations/<org-id>/domains/<domain-id>.
+  string name = 1;
+
+  // The domain that this authentication provider is in control of. Immutable once created.
+  string email_domain = 2;
+
+  // If the domain has not yet been verified, this will contain the data needed to verify the domain.
+  string domain_verification_data = 3;
+
+  // The SSO provider.
+  oneof provider {
+    // OIDC configuration for this authentication domain.
+    OIDCAuthenticationProvider oidc = 4;
+  }
+}
+
+// OIDC authentication provider.
+message OIDCAuthenticationProvider {
+  // The OpenID issuer.
+  string issuer = 1;
+
+  // The client identifier that Kalix should use for the authorization server. See section 2.2 of RFC6749.
+  string client_id = 2;
+
+  // The groups claim.
+  string groups_claim = 3;
+
+  // The scopes to request. This will be in addition to the default that Kalix requests, which are
+  // "openid", "profile" and "email"
+  repeated string scopes = 4;
+
+  // The client secret. Whether this is set, and what it contains, depends on client_authentication_method.
+  string client_secret = 5;
+
+  // The authentication method, as defined in section 9 of the OpenID Connect Core specification.
+  OIDCClientAuthenticationMethod authentication_method = 6;
+
+  // An OIDC client authentication method.
+  enum OIDCClientAuthenticationMethod {
+    // Don't use client authentication.
+    OIDC_CLIENT_AUTHENTICATION_METHOD_NONE = 0;
+    // Use basic authentication using the client_secret as the password.
+    OIDC_CLIENT_AUTHENTICATION_METHOD_BASIC = 1;
+    // Include the client_secret in the request body.
+    OIDC_CLIENT_AUTHENTICATION_METHOD_POST = 2;
+    // Use the HMAC key from client_secret to sign a JWT and use it according to RFC7523.
+    OIDC_CLIENT_AUTHENTICATION_METHOD_JWT = 3;
+    // Use Kalix's private key to sign a JWT and use it according to RFC7523. The public keys can be found at
+    // https://api.kalix.io/.well-known/jwks.json. Note that these keys are rotated regularly, the OP must periodically
+    // request the most up to date key set.
+    OIDC_CLIENT_AUTHENTICATION_METHOD_PRIVATE_KEY_JWT = 4;
+  }
+
+}
+
+// An Akka region.
+message Region {
+  // The Akka region name
+  string name = 1;
+
+  // The region group this region is a member of
+  string group = 2;
+
+  // The type of this region
+  repeated string region_uses = 3;
+
+  // The cloud provider hosting this region
+  string cloud_provider = 4;
+
+  // The cloud provider (specific, geographic) region where this Akka region runs
+  string provider_region = 5;
+}
+
+// Get user permissions request message.
+message GetUserPermissionsRequest {
+  // The resource name of the organization, in format organizations/<org-id>.
+  string parent = 1;
+}
+
+// Get user permissions response message.
+message GetUserPermissionsResponse {
+  // The name of the organization that these permissions are for, in format organizations/<org-id>
+  string parent = 1;
+  // The name of the user that these permissions are for, in format users/<user-id>
+  string user_name = 2;
+  // The groups the user is in
+  repeated string user_groups = 3;
+  // The effective roles that this user has (both through direct role bindings and group memberships).
+  repeated string role_names = 4;
+  // The permissions the user has on this organization.
+  repeated string permissions = 5;
+}
+
+// Check user permission request message.
+message CheckUserPermissionRequest {
+  // The resource name of the organization, in format organizations/<org-id>.
+  string parent = 1;
+  // The permission to check for.
+  string permission = 2;
+}
+
+// Check user permission response message.
+message CheckUserPermissionResponse {
+  // The name of the organization that these permissions are for, in format organizations/<org-id>
+  string name = 1;
+  // The name of the user that these permissions are for
+  string user_name = 2;
+  // The groups the user is in
+  repeated string user_groups = 3;
+  // The effective roles that this user has (both through direct role bindings and group memberships).
+  repeated string role_names = 4;
+  // The permission check that was requested
+  string permission = 5;
+  // The result of the permission check - true if the user has the permission on this organization, false if otherwise
+  bool result = 6;
+}
+
+// Get authentication domain test challenge request message
+message GetAuthenticationDomainTestChallengeRequest {
+  // The name of the authentication domain to test
+  string name = 1;
+}
+
+// Perform authentication domain test request message
+message PerformAuthenticationDomainTestRequest {
+  // The name of the authentication domain to test
+  string name = 1;
+  oneof provider {
+    // Perform an OIDC code test.
+    OIDCCodeTest oidc_code = 2;
+  }
+}
+
+// OIDC code test
+message OIDCCodeTest {
+  // The OIDC code.
+  string code = 1;
+  // The token to identify this flow.
+  //
+  // This should be the same token that was returned by the OIDCCodeTestChallenge. It should be stored in the browsers
+  // local state, and retrieved from there to send with this request.
+  string token = 2;
+  // The `redirect_uri` passed to the authorization request. REQUIRED, as per the OIDC specification.
+  string redirect_uri = 3;
+}
+
+// Get authentication domain test challenge response message
+message AuthenticationDomainTestChallenge {
+  // The name of the authentication domain that this challenge is for
+  string name = 1;
+  // The SSO porvider
+  oneof provider {
+    // The challenge for an OIDC code test.
+    OIDCCodeTestChallenge oidc_code = 2;
+  }
+  // The base URL for the UI.
+  string ui_base_url = 3;
+}
+
+// OIDC code test challenge
+message OIDCCodeTestChallenge {
+  // The OpenID authorization endpoint. This is the URL that is used to build the redirect URI that the user will
+  // be redirected to to authenticate with the OIDC provider and authorize login.
+  string authorization_endpoint = 1;
+  // The OIDC client ID, which should be passed to the authentication endpoint.
+  string client_id = 2;
+  // The scopes to request, which should be passed to the authentication endpoint.
+  repeated string scopes = 3;
+  // The one-time-code ("number once") which should be passed to the authentication code endpoint
+  string nonce = 4;
+  // The token.
+  //
+  // The token should be stored in the clients local storage, and passed along with the OIDCCodeAuthentication when
+  // the authorization request is complete.
+  string token = 5;
+}
+
+// Authentication domain test result
+message AuthenticationDomainTestResult {
+  // The name of the authentication domain that this test result is for
+  string name = 1;
+  // The overall status of the test
+  AuthenticationDomainTestStatus status = 2;
+  // If there was an error that prevented the test from being completed, it will be in here
+  string error_message = 3;
+  // The requests that were made as part of the test
+  repeated AuthenticationDomainTestRequest requests = 4;
+}
+
+// Authentication domain test request
+message AuthenticationDomainTestRequest {
+  // The name of the request being captured
+  string description = 1;
+  // The status of this request
+  AuthenticationDomainTestStatus status = 2;
+  // The request made in raw form - this should be output in <pre> tags
+  string request = 3;
+  // The response
+  oneof response {
+    // The response received in raw form - this should be output in <pre> tags
+    string response_success = 4;
+    // If no response was received due to an error, that error is here.
+    string response_error = 5;
+  }
+  // The validations done
+  repeated AuthenticationDomainTestValidation validations = 6;
+}
+
+// Authentication domain test validation
+message AuthenticationDomainTestValidation {
+  // Description of the validation performed
+  string description = 1;
+  // Status of the validation
+  AuthenticationDomainTestStatus status = 2;
+  // Message associated with the validation
+  string message = 3;
+}
+
+// Status of an authentication domain test.
+enum AuthenticationDomainTestStatus {
+  // The test was successful.
+  AUTHENTICATION_DOMAIN_TEST_STATUS_SUCCESS = 0;
+  // The test succeeded but with a warning.
+  AUTHENTICATION_DOMAIN_TEST_STATUS_WARN = 1;
+  // The test failed.
+  AUTHENTICATION_DOMAIN_TEST_STATUS_ERROR = 2;
+}
+
+// Organization configuration types
+
+// Scope for matching configuration. Empty fields mean "match all".
+// More specific scopes (with more fields set) override less specific ones.
+message ConfigScope {
+  // Region scope (e.g., "us-east1")
+  string region = 1;
+  // Project scope (e.g., "payments")
+  string project = 2;
+  // Service scope (e.g., "processor"). Requires project to be set.
+  string service = 3;
+}
+
+// Configuration values that can be set at various scopes.
+message ConfigValues {
+  // Arbitrary HOCON overrides forwarded to runtime as config entries.
+  map<string, string> runtime_config = 1;
+  // Allow users to set labels on service descriptors.
+  optional bool custom_labels_enabled = 2;
+  // Override the runtime/proxy image used for services.
+  // Applies to both embedded mode (runtime) and sidecar mode (proxy).
+  optional string runtime_image = 3;
+  // Allow users to set annotations on service descriptors.
+  optional bool custom_annotations_enabled = 4;
+  // Per-organization quota overrides. Keys are quota names (e.g. "MAX_PROJECTS"),
+  // values are the limit. Unset keys use platform defaults.
+  map<string, int32> quotas = 5;
+  // Default service instance type applied when KalixService.spec.resources.instanceType
+  // is unset. Format is "<shape>.<size>" (e.g. "general.small") or
+  // "g<N>.<shape>.<size>" for non-default generations.
+  optional string default_instance_type = 6;
+  // List of instance type strings KalixServices in this scope may set
+  // explicitly. A nil or empty list means customers cannot opt into any
+  // tier — only the platform default ("general.small") is accepted by
+  // the deployment operator's admission webhook.
+  repeated string allowed_instance_types = 7;
+}
+
+// A scope paired with its configuration values.
+message ScopedConfig {
+  // The config scope.
+  ConfigScope scope = 1;
+  // The config.
+  ConfigValues values = 2;
+  // ResourceName string of the principal that issued the most recent
+  // SetOrganizationConfig command targeting this scope. Empty when the entry
+  // predates audit tracking.
+  string last_modified_by = 3;
+  // Timestamp captured when the most recent change was persisted. Unset when
+  // the entry predates audit tracking.
+  google.protobuf.Timestamp last_modified_at = 4;
+  // Free-form human-readable justification supplied on the change. Empty when
+  // not supplied or for entries that predate audit tracking.
+  string description = 5;
+}
+
+// Set organization configuration request message.
+message SetOrganizationConfigRequest {
+  // The organization name in format "organizations/{org_id}"
+  string parent = 1;
+  // The scope at which to set this configuration
+  ConfigScope scope = 2;
+  // The configuration values to set
+  ConfigValues values = 3;
+  // Free-form human-readable justification for the change. Optional;
+  // max length 1024 chars (enforced server-side).
+  string description = 4;
+}
+
+// Remove organization configuration request message.
+message RemoveOrganizationConfigRequest {
+  // The organization name in format "organizations/{org_id}"
+  string parent = 1;
+  // The scope at which to remove configuration
+  ConfigScope scope = 2;
+  // Free-form human-readable justification for the removal. Optional;
+  // max length 1024 chars (enforced server-side).
+  string description = 3;
+}
+
+// Get organization configuration request message.
+message GetOrganizationConfigRequest {
+  // The organization name in format "organizations/{org_id}"
+  string parent = 1;
+}
+
+// Get organization configuration response message.
+message GetOrganizationConfigResponse {
+  // All configured scopes and their values
+  repeated ScopedConfig config = 1;
+}
+
+// Get effective organization configuration request message.
+message GetEffectiveConfigRequest {
+  // The organization name in format "organizations/{org_id}"
+  string parent = 1;
+  // Optional region context for config resolution
+  string region = 2;
+  // Optional project context for config resolution
+  string project = 3;
+  // Optional service context for config resolution (requires project)
+  string service = 4;
+}
+
+// Get effective organization configuration response message.
+message GetEffectiveConfigResponse {
+  // The merged configuration values for the specified context
+  ConfigValues effective_values = 1;
+}
+
