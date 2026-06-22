@@ -1,0 +1,70 @@
+name: Regenerate Control Plane API Schema
+
+on:
+  workflow_dispatch:
+
+env:
+  JAVA_OPTS: -XX:+UseCompactObjectHeaders
+
+jobs:
+  regenerate_schema:
+    runs-on: Akka-Default-Latest
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
+    steps:
+    - name: Checkout Global Scripts
+      # https://github.com/actions/checkout/releases
+      uses: actions/checkout@v6
+      with:
+        repository: akka/github-actions-scripts
+        path: github-actions-scripts
+
+    - name: Setup global resolver
+      run: |
+        chmod +x ./github-actions-scripts/setup_global_resolver.sh
+        ./github-actions-scripts/setup_global_resolver.sh
+        cp -r ./github-actions-scripts ~/
+
+    - name: Checkout
+      # https://github.com/actions/checkout/releases
+      uses: actions/checkout@v6
+
+    - name: Cache Coursier cache
+      # https://github.com/coursier/cache-action/releases
+      uses: coursier/cache-action@v8.1.0
+
+    - name: Set up JDK 25
+      # https://github.com/coursier/setup-action/releases
+      uses: coursier/setup-action@v3.0.0
+      with:
+        jvm: temurin:1.25
+        apps: sbt
+
+    - name: Authenticate to Google Cloud
+      # https://github.com/google-github-actions/auth/releases
+      uses: google-github-actions/auth@v3
+      with:
+        workload_identity_provider: projects/791645197608/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+        service_account: github-akka-platform-api-repo@kalix-dev.iam.gserviceaccount.com
+
+    - name: Get GKE credentials
+      # https://github.com/google-github-actions/get-gke-credentials/releases
+      uses: google-github-actions/get-gke-credentials@v2
+      with:
+        cluster_name: dev-us-east-execution-1
+        location: us-east1
+
+    - name: Regenerate control plane API schema
+      run: sbt controlPlaneApiSchema
+
+    - name: Create pull request
+      # https://github.com/peter-evans/create-pull-request/releases
+      uses: peter-evans/create-pull-request@v7
+      with:
+        commit-message: 'Regenerate control plane API schema'
+        title: 'Regenerate control plane API schema'
+        body: 'Automated regeneration of `schemas/control-plane/openapi/api.json` triggered manually.'
+        branch: regenerate-control-plane-schema
+        add-paths: schemas/control-plane/openapi/api.json
