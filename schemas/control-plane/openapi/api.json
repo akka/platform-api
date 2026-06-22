@@ -5595,7 +5595,11 @@
             "description" : "Type specifies the truststore format.",
             "type" : "string",
             "default" : "JKS",
-            "enum" : [ "JKS", "PKCS12" ]
+            "allOf" : [ {
+              "enum" : [ "JKS", "PKCS12" ]
+            }, {
+              "enum" : [ "JKS", "PKCS12" ]
+            } ]
           }
         }
       },
