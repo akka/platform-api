@@ -46,7 +46,7 @@ jobs:
       # https://github.com/google-github-actions/auth/releases
       uses: google-github-actions/auth@v3
       with:
-        workload_identity_provider: projects/791645197608/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+        workload_identity_provider: projects/791645197608/locations/global/workloadIdentityPools/github-pool/providers/github
         service_account: github-akka-platform-api-repo@kalix-dev.iam.gserviceaccount.com
 
     - name: Get GKE credentials
