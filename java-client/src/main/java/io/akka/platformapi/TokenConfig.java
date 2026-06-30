@@ -2,7 +2,7 @@ package io.akka.platformapi;
 
 /**
  * Marker interface for token configuration types.
- * Currently only {@link RefreshTokenConfig} is supported; future implementations
- * may add session tokens, service tokens, etc.
+ * Implementations: {@link RefreshTokenConfig} (long-lived refresh token) and
+ * {@link OAuthTokenConfig} (OAuth token exchange via RFC 8693).
  */
 public interface TokenConfig {}
