@@ -35,6 +35,7 @@ service Auth {
     rpc CreateContainerRegistryToken(CreateContainerRegistryTokenRequest) returns (ContainerRegistryToken) {
         option (google.api.http) = {
             post: "/kalix.io/v1alpha/container-registry/tokens"
+            body: "*"
         };
     }
 
@@ -47,6 +48,7 @@ service Auth {
     rpc CreateAccessToken (CreateAccessTokenRequest) returns (AccessToken) {
         option (google.api.http) = {
             post: "/kalix.io/v1alpha/auth/tokens"
+            body: "*"
         };
     }
 
@@ -61,6 +63,130 @@ service Auth {
             get: "/kalix.io/v1alpha/auth/current"
         };
     }
+
+    rpc CreateOAuthToken(CreateOAuthTokenRequest) returns (CreateOAuthTokenResponse) {
+        option (google.api.http) = {
+            post: "/oauth/token"
+            body: "*"
+        };
+    }
+}
+
+message CreateOAuthTokenRequest {
+    // The grant type.
+    //
+    // Specified in https://datatracker.ietf.org/doc/html/rfc6749#appendix-A.10.
+    //
+    // Supported grant types are:
+    //
+    // * authorization_code (https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3)
+    // * refresh_token (https://datatracker.ietf.org/doc/html/rfc6749#section-6)
+    // * urn:ietf:params:oauth:grant-type:token-exchange
+    string grant_type = 1;
+
+    // If using the authorization_code grant type, the authorization code.
+    //
+    // Specified in https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3.
+    string code = 2;
+
+    // If using the authorization_code grant type, and a redirect_uri parameter was included in the authorization
+    // request, then required, and must be identical to the parameter from the authorization request.
+    //
+    // Specified in https://datatracker.ietf.org/doc/html/rfc6749#appendix-A.6
+    string redirect_uri = 3;
+
+    // The client id.
+    //
+    // If the client is not authenticating with the authorization server, and the grant type is either
+    // authorization_code or refresh_token, then required. Also used when authenticating form based authentication.
+    //
+    // Specified in https://datatracker.ietf.org/doc/html/rfc6749#appendix-A.1
+    string client_id = 4;
+
+    // The client secret.
+    //
+    // See https://datatracker.ietf.org/doc/html/rfc6749#section-2.3.1.
+    string client_secret = 5;
+
+    // The scope. Multiple scopes should be separated by a space character.
+    //
+    // Specified in https://datatracker.ietf.org/doc/html/rfc6749#appendix-A.4.
+    string scope = 6;
+
+    // The refresh token, used for refresh_token grant types.
+    //
+    // See https://datatracker.ietf.org/doc/html/rfc6749#section-6
+    string refresh_token = 7;
+
+    // The resource, optional for token exchange requests.
+    //
+    // See https://datatracker.ietf.org/doc/html/rfc8693#section-2.1
+    string resource = 8;
+
+    // The audience, required for token exchange requests.
+    //
+    // This is used to indicate the configured OpenID Connect identity provider.
+    //
+    // For Akka services, it should be the region resource name in format regions/<region-id>.
+    //
+    // See https://datatracker.ietf.org/doc/html/rfc8693#section-2.1
+    string audience = 9;
+
+    // The requested token type, optional for token exchange requests.
+    //
+    // Only urn:ietf:params:oauth:token-type:access_token is supported, which is the default.
+    //
+    // See https://datatracker.ietf.org/doc/html/rfc8693#section-2.1
+    string requested_token_type = 10;
+
+    // The subject token, required for token exchange requests.
+    //
+    // See https://datatracker.ietf.org/doc/html/rfc8693#section-2.1
+    string subject_token = 11;
+
+    // The subject token type, required for token exchange requests.
+    //
+    // See https://datatracker.ietf.org/doc/html/rfc8693#TokenTypeIdentifiers
+    string subject_token_type = 12;
+}
+
+// OAuth Token response.
+//
+// This is specified in https://datatracker.ietf.org/doc/html/rfc6749#section-5.1
+message CreateOAuthTokenResponse {
+    // The access token issued by the authorization server. Required.
+    string access_token = 1 [json_name="access_token"];
+
+    // The type of token issued. Required.
+    string token_type = 2 [json_name="token_type"];
+
+    // The lifetime in seconds of the access token.
+    int64 expires_in = 3 [json_name="expires_in"];
+
+    // The refresh token, if requested.
+    string refresh_token = 4 [json_name="refresh_token"];
+
+    // The scope of the access token.
+    string scope = 5 [json_name="scope"];
+
+    // The issued token type.
+    //
+    // See https://datatracker.ietf.org/doc/html/rfc8693#TokenTypeIdentifiers
+    string issued_token_type = 6 [json_name="issued_token_type"];
+}
+
+// OAuth Token error response.
+//
+// This is specified in https://datatracker.ietf.org/doc/html/rfc6749#section-5.2
+message OAuthTokenError {
+    // The ASCII error code. Required.
+    string error = 1 [json_name="error"];
+
+    // Human readable ASCII text providing additional information.
+    string error_description = 2 [json_name="error_description"];
+
+    // The refresh token, if requested.
+    string error_uri = 3 [json_name="error_uri"];
 }
 
 // Create a container registry access token request.

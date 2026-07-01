@@ -6,7 +6,13 @@ import io.akka.platformapi.controlplane.ApiClient;
 import io.akka.platformapi.controlplane.api.AkkaControlPlaneApi;
 import io.grpc.CallCredentials;
 import io.grpc.Metadata;
+import java.io.Closeable;
 import java.net.http.HttpClient;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import kalix.api.auth.v1alpha.AuthClient;
 import kalix.api.organizations.v1alpha.OrganizationsClient;
 import kalix.api.projects.v1alpha.ListProjectsRequest;
@@ -15,13 +21,6 @@ import kalix.api.projects.v1alpha.ListRegionsResponse;
 import kalix.api.projects.v1alpha.ProjectsClient;
 import kalix.api.projects.v1alpha.Region;
 import kalix.api.users.v1alpha.UsersClient;
-
-import java.io.Closeable;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 
 /**
  * Entry point for the Akka Platform SDK.
@@ -37,7 +36,7 @@ import java.util.concurrent.Executor;
  *
  * <p>Usage:
  * <pre>{@code
- * AkkaPlatformSdk sdk = AkkaPlatformSdk.create();  // reads AKKA_REFRESH_TOKEN, AKKA_API_HOST
+ * AkkaPlatformSdk sdk = AkkaPlatformSdk.create();  // reads AKKA_TOKEN, AKKA_API_HOST
  * sdk.projects().thenCompose(c -> c.listProjects(ListProjectsRequest.newBuilder().build()))
  *    .thenAccept(System.out::println);
  * sdk.controlPlaneApi("my-project").thenCompose(api -> api.listServices("my-project", ...));
@@ -87,12 +86,6 @@ public final class AkkaPlatformSdk implements Closeable {
         this.system = system;
         this.ownSystem = ownSystem;
 
-        if (!(config.getTokenConfig() instanceof RefreshTokenConfig)) {
-            throw new IllegalArgumentException(
-                    "Unsupported token type: " + config.getTokenConfig().getClass().getSimpleName());
-        }
-        String refreshToken = ((RefreshTokenConfig) config.getTokenConfig()).getRefreshToken();
-
         String apiHost = config.getApiHost();
         String host;
         int port;
@@ -109,7 +102,21 @@ public final class AkkaPlatformSdk implements Closeable {
                 .connectToServiceAt(host, port, system)
                 .withTls(true);
         var unauthedAuthClient = AuthClient.create(unauthedSettings, system);
-        this.tokenCache = new AccessTokenCache(unauthedAuthClient, refreshToken);
+
+        TokenConfig tokenConfig = config.getTokenConfig();
+        TokenFetcher fetcher;
+        if (tokenConfig instanceof TokenFetcher tf) {
+            fetcher = tf;
+        } else if (tokenConfig instanceof RefreshTokenConfig rc) {
+            fetcher = new RefreshTokenFetcher(unauthedAuthClient, rc.getRefreshToken());
+        } else if (tokenConfig instanceof OAuthTokenConfig oc) {
+            fetcher = new OAuthTokenFetcher(unauthedAuthClient, oc);
+        } else {
+            throw new IllegalArgumentException(
+                    "Unsupported token type: " + tokenConfig.getClass().getSimpleName() +
+                    ". Implement TokenFetcher to provide a custom authentication mechanism.");
+        }
+        this.tokenCache = new AccessTokenCache(fetcher);
 
         GrpcClientSettings settings = unauthedSettings.withCallCredentials(new CallCredentials() {
             @Override
