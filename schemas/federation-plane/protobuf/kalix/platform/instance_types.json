@@ -1,0 +1,65 @@
+{
+  "jvmDefaults": {
+    "heapPercentage":      50,
+    "minActiveProcessors": 2
+  },
+  "entries": [
+    {
+      "displayName": "g1.general.x-small",
+      "status":      "active",
+      "sidecar":     {
+        "runtime": { "cpu": "200m", "memory": "832Mi",  "jvm": { "directMemorySize": "208Mi" } },
+        "userFn":  { "cpu": "100m", "memory": "640Mi",  "jvm": { "directMemorySize": "160Mi" } }
+      },
+      "embedded":    { "runtime": { "cpu": "400m", "memory": "1280Mi", "jvm": { "directMemorySize": "320Mi" } } }
+    },
+    {
+      "displayName":     "g1.general.small",
+      "status":          "active",
+      "platform_default": true,
+      "sidecar":         {
+        "runtime": { "cpu": "400m", "memory": "1664Mi", "jvm": { "xms": "1024Mi", "xmx": "1024Mi" } },
+        "userFn":  { "cpu": "200m", "memory": "1280Mi", "jvm": { "xms": "768Mi",  "xmx": "768Mi"  } }
+      },
+      "embedded":        { "runtime": { "cpu": "800m", "memory": "2560Mi", "jvm": { "heapPercentage": 50 } } }
+    },
+
+    {
+      "displayName": "g1.memory.x-small",
+      "status":      "active",
+      "sidecar":     {
+        "runtime": { "cpu": "200m", "memory": "832Mi",  "jvm": { "directMemorySize": "208Mi" } },
+        "userFn":  { "cpu": "100m", "memory": "1280Mi", "jvm": { "directMemorySize": "256Mi" } }
+      },
+      "embedded":    { "runtime": { "cpu": "400m", "memory": "1920Mi", "jvm": { "directMemorySize": "480Mi" } } }
+    },
+    {
+      "displayName": "g1.memory.small",
+      "status":      "active",
+      "sidecar":     {
+        "runtime": { "cpu": "400m", "memory": "1664Mi", "jvm": { "directMemorySize": "416Mi" } },
+        "userFn":  { "cpu": "200m", "memory": "2560Mi", "jvm": { "directMemorySize": "384Mi" } }
+      },
+      "embedded":    { "runtime": { "cpu": "800m", "memory": "3840Mi", "jvm": { "directMemorySize": "960Mi" } } }
+    },
+
+    {
+      "displayName": "g1.compute.x-small",
+      "status":      "active",
+      "sidecar":     {
+        "runtime": { "cpu": "400m", "memory": "832Mi",  "jvm": { "directMemorySize": "208Mi" } },
+        "userFn":  { "cpu": "200m", "memory": "640Mi",  "jvm": { "directMemorySize": "160Mi" } }
+      },
+      "embedded":    { "runtime": { "cpu": "800m", "memory": "1280Mi", "jvm": { "directMemorySize": "320Mi" } } }
+    },
+    {
+      "displayName": "g1.compute.small",
+      "status":      "active",
+      "sidecar":     {
+        "runtime": { "cpu": "800m",  "memory": "1664Mi", "jvm": { "directMemorySize": "416Mi" } },
+        "userFn":  { "cpu": "400m",  "memory": "1280Mi", "jvm": { "directMemorySize": "256Mi" } }
+      },
+      "embedded":    { "runtime": { "cpu": "1600m", "memory": "2560Mi", "jvm": { "directMemorySize": "640Mi" } } }
+    }
+  ]
+}

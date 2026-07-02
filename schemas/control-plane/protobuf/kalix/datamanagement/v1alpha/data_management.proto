@@ -95,6 +95,7 @@ message ExportStore {
     GoogleCloudStore google = 3;
     S3Store s3 = 4;
     PlatformManagedStore platform_managed = 5;
+    AzureBlobStore azure_blob = 7;
   }
   // If set, exported data will be split into multiple objects, each no larger
   // than this size in bytes. Set to 0 to disable splitting (single object per
@@ -152,6 +153,31 @@ message S3Store {
   // The custom S3 endpoint url to connect to, e.g., for PrivateLink access.
   // If not set, defaults to standard AWS S3 endpoint.
   string endpoint_url = 8;
+}
+
+// Authenticates to Azure Blob Storage using a Microsoft Entra application service principal with a client secret.
+message AzureBlobStore {
+  // The secret containing the Azure credentials
+  string credentials_secret = 1;
+
+  // The name of the blob container
+  string container = 2;
+
+  // The object name prefix
+  string object_name_prefix = 3;
+
+  // The custom endpoint url to connect to, if different from default.
+  // If not set, defaults to https://<account_name>.blob.core.windows.net
+  string endpoint_url = 4;
+
+  // Key in the secret holding the Microsoft Entra tenant id.
+  string tenant_id_key = 5;
+
+  // Key in the secret holding the Microsoft Entra client id (application id).
+  string client_id_key = 6;
+
+  // Key in the secret holding the Microsoft Entra client secret.
+  string client_secret_key = 7;
 }
 
 // Platform managed stores is a store that is managed by the platform for user use.
