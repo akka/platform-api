@@ -1,21 +1,20 @@
 syntax = "proto3";
 
-package kalix.organizations.v1alpha;
+package kalix.organizations.v1;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/field_mask.proto";
-import "kalix/billing/v1alpha/billing.proto";
 
 // See https://cloud.google.com/apis/design/file_structure#proto_options
-option go_package = "github.com/lightbend/kalix/cli/api/kalix/organizations/v1alpha;organizations";
-option csharp_namespace = "Kalix.Projects.V1Alpha";
+option go_package = "github.com/lightbend/kalix/cli/api/kalix/organizations/v1;organizations";
+option csharp_namespace = "Kalix.Organizations.V1";
 option java_multiple_files = true;
-option java_outer_classname = "ProjectsProto";
-option java_package = "kalix.api.organizations.v1alpha";
+option java_outer_classname = "OrganizationsProto";
+option java_package = "kalix.api.organizations.v1";
 option objc_class_prefix = "LBCSEV1AP";
-option php_namespace = "Kalix\\Projects\\V1alpha";
+option php_namespace = "Kalix\\Organizations\\V1";
 
 // The Organizations API manages organizations, their membership, and SSO configuration.
 //
@@ -35,7 +34,7 @@ service Organizations {
   rpc CreateOrganizationInvitation(CreateOrganizationInvitationRequest)
       returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post : "/kalix.io/v1alpha/"
+      post : "/kalix.io/v1/"
           "{parent=organizations/*}/invitations"
     };
   }
@@ -49,7 +48,7 @@ service Organizations {
   rpc AcceptOrganizationInvitation(AcceptOrganizationInvitationRequest)
       returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post : "/kalix.io/v1alpha/{name=organizations/*/"
+      post : "/kalix.io/v1/{name=organizations/*/"
           "invitations/*}:accept"
     };
   }
@@ -63,7 +62,7 @@ service Organizations {
   rpc ListOrganizations(ListOrganizationsRequest)
       returns (ListOrganizationsResponse) {
     option (google.api.http) = {
-      post : "/kalix.io/v1alpha/organizations"
+      post : "/kalix.io/v1/organizations"
     };
   }
 
@@ -75,7 +74,7 @@ service Organizations {
   // Organization roles required: any
   rpc GetOrganization(GetOrganizationRequest) returns (Organization) {
     option (google.api.http) = {
-      get : "/kalix.io/v1alpha/{name=organizations/*}"
+      get : "/kalix.io/v1/{name=organizations/*}"
     };
   }
 
@@ -88,7 +87,7 @@ service Organizations {
   rpc ListAdministeredBillingOrganizations(ListAdministeredBillingOrganizationsRequest)
       returns (ListAdministeredBillingOrganizationsResponse) {
     option (google.api.http) = {
-      get : "/kalix.io/v1alpha/billing-organizations"
+      get : "/kalix.io/v1/billing-organizations"
     };
   }
 
@@ -101,7 +100,7 @@ service Organizations {
   rpc ListRoleBindings(ListRoleBindingsRequest)
       returns (ListRoleBindingsResponse) {
     option (google.api.http) = {
-      get : "/kalix.io/v1alpha/"
+      get : "/kalix.io/v1/"
           "{parent=organizations/*}/roles/-/bindings"
     };
   }
@@ -115,7 +114,7 @@ service Organizations {
   rpc ListPendingInvitations(ListPendingInvitationsRequest)
       returns (ListPendingInvitationsResponse) {
     option (google.api.http) = {
-      get : "/kalix.io/v1alpha/"
+      get : "/kalix.io/v1/"
           "{parent=organizations/*}/pending-invitations"
     };
   }
@@ -128,7 +127,7 @@ service Organizations {
   // Organization roles required: superuser
   rpc CancelOrganizationInvitationByEmail(CancelOrganizationInvitationByEmailRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete : "/kalix.io/v1alpha/"
+      delete : "/kalix.io/v1/"
           "{parent=organizations/*}/pending-invitations/{email}"
     };
   }
@@ -138,7 +137,7 @@ service Organizations {
   // Organization roles required: superuser
   rpc CreateRoleBinding(CreateRoleBindingRequest) returns (RoleBinding) {
     option (google.api.http) = {
-      post : "/kalix.io/v1alpha/{parent=organizations/*/roles/*}/bindings"
+      post : "/kalix.io/v1/{parent=organizations/*/roles/*}/bindings"
       body : "role_binding"
     };
   }
@@ -150,7 +149,7 @@ service Organizations {
   rpc DeleteRoleBinding(DeleteRoleBindingRequest)
       returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete : "/kalix.io/v1alpha/{name=organizations/*/roles/*/bindings/*}"
+      delete : "/kalix.io/v1/{name=organizations/*/roles/*/bindings/*}"
     };
   }
 
@@ -160,7 +159,7 @@ service Organizations {
   // Organization roles required: superuser
   rpc ListAuthenticationDomains(ListAuthenticationDomainsRequest) returns (ListAuthenticationDomainsResponse) {
     option (google.api.http) = {
-      get: "/kalix.io/v1alpha/{parent=organizations/*}/domains"
+      get: "/kalix.io/v1/{parent=organizations/*}/domains"
     };
   }
 
@@ -170,7 +169,7 @@ service Organizations {
   // Organization roles required: superuser
   rpc CreateAuthenticationDomain(CreateAuthenticationDomainRequest) returns (AuthenticationDomain) {
     option (google.api.http) = {
-      post: "/kalix.io/v1alpha/{parent=organizations/*}/domains"
+      post: "/kalix.io/v1/{parent=organizations/*}/domains"
       body: "authentication_domain"
     };
   }
@@ -181,7 +180,7 @@ service Organizations {
   // Organization roles required: superuser
   rpc UpdateAuthenticationDomain(UpdateAuthenticationDomainRequest) returns (AuthenticationDomain) {
     option (google.api.http) = {
-      put: "/kalix.io/v1alpha/{name=organizations/*/domains/*}"
+      put: "/kalix.io/v1/{name=organizations/*/domains/*}"
       body: "authentication_domain"
     };
   }
@@ -189,14 +188,14 @@ service Organizations {
   // Get a challenge for an authentication domain test
   rpc GetAuthenticationDomainTestChallenge (GetAuthenticationDomainTestChallengeRequest) returns (AuthenticationDomainTestChallenge) {
     option (google.api.http) = {
-      get: "/kalix.io/v1alpha/{name=organizations/*/domains/*}/test"
+      get: "/kalix.io/v1/{name=organizations/*/domains/*}/test"
     };
   }
 
   // Perform an authentication domain test
   rpc PerformAuthenticationDomainTest (PerformAuthenticationDomainTestRequest) returns (AuthenticationDomainTestResult) {
     option (google.api.http) = {
-      post: "/kalix.io/v1alpha/{name=organizations/*/domains/*}/test"
+      post: "/kalix.io/v1/{name=organizations/*/domains/*}/test"
       body: "*"
     };
   }
@@ -207,7 +206,7 @@ service Organizations {
   // Organization roles required: superuser
   rpc DeleteAuthenticationDomain(DeleteAuthenticationDomainRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/kalix.io/v1alpha/{name=organizations/*/domains/*}"
+      delete: "/kalix.io/v1/{name=organizations/*/domains/*}"
     };
   }
 
@@ -288,9 +287,9 @@ service Organizations {
   // on the specified organization.
   //
   // Authentication required: yes
-  rpc GetUserPermissions(GetUserPermissionsRequest) returns (GetUserPermissionsResponse) {
+  rpc GetPermissions(GetPermissionsRequest) returns (GetPermissionsResponse) {
     option (google.api.http) = {
-      get: "/kalix.io/v1alpha/{parent=organizations/*}/permissions"
+      get: "/kalix.io/v1/{parent=organizations/*}/permissions"
     };
   }
 
@@ -300,9 +299,9 @@ service Organizations {
   // on the specified organization.
   //
   // Authentication required: yes
-  rpc CheckUserPermission(CheckUserPermissionRequest) returns (CheckUserPermissionResponse) {
+  rpc CheckPermission(CheckPermissionRequest) returns (CheckPermissionResponse) {
     option (google.api.http) = {
-      get: "/kalix.io/v1alpha/{parent=organizations/*}/permissions:check"
+      get: "/kalix.io/v1/{parent=organizations/*}/permissions:check"
     };
   }
 
@@ -425,6 +424,13 @@ message SecuritySettings {
   bool enforce_mfa = 1;
 }
 
+// A billing identifier associates an organization with a billing account.
+message BillingIdentifier {
+  // The uuid identifying the billing account in the billing system. Pass this
+  // to the Billing API to retrieve plan, status, and contact details.
+  string payload = 1;
+}
+
 // An organization.
 message Organization {
   // The resource name of the organization, in format organizations/<org-id>.
@@ -437,19 +443,14 @@ message Organization {
   SecuritySettings security_settings = 4;
   // When the organization was created.
   google.protobuf.Timestamp created_at = 5;
-  // for removed `billing_type`
-  reserved 6;
-  reserved "billing_type";
   // The list of regions that are available to this organization.
-  repeated Region regions = 7;
+  repeated Region regions = 6;
   // The list of authentication domains that this organization provides.
-  repeated AuthenticationDomain auth_domains = 8;
-  // Will be removed in a future release
-  kalix.billing.v1alpha.BillingIdentifier billing_identifier = 9 [deprecated = true];
-  // The billing account.
-  kalix.billing.v1alpha.BillingAccountV2 billing_account = 10;
-  // The workload identity providers configured for this organization.
-  repeated WorkloadIdentityProvider workload_identity_providers = 11;
+  repeated AuthenticationDomain auth_domains = 7;
+  // The billing identifier for this organization. Billing plan, status, and
+  // contact details are retrieved separately via the Billing API using the
+  // identifier's payload.
+  BillingIdentifier billing_identifier = 8;
 }
 
 // An organization together with the authenticated user's roles in it.
@@ -464,19 +465,18 @@ message OrganizationAndRoles {
 
 // A binding of a role to a principal in an organization.
 message RoleBinding {
-  reserved 1,2,3;
   // Output only. Email of the user.
-  string user_email = 4;
+  string user_email = 1;
   // Output only. Full name of the user.
-  string user_full_name = 5;
+  string user_full_name = 2;
   // Output only. Friendly Name of the user or organization
-  string principal_friendly_name = 6;
+  string principal_friendly_name = 3;
   // Name of the binding in format organization/{orgid}/roles/{roleid}/bindings/{bindingid}
-  string name = 7;
+  string name = 4;
   // Name of the principal in format users/{userid} or organizations/{orgid}/groups/{groupid}
-  string principal = 8;
+  string principal = 5;
   // Whether the user has MFA enabled.
-  bool mfa_enabled = 9;
+  bool mfa_enabled = 6;
 }
 
 // An invitation to join an organization.
@@ -608,47 +608,47 @@ message Region {
   string provider_region = 5;
 }
 
-// Get user permissions request message.
-message GetUserPermissionsRequest {
+// Get permissions request message.
+message GetPermissionsRequest {
   // The resource name of the organization, in format organizations/<org-id>.
   string parent = 1;
 }
 
-// Get user permissions response message.
-message GetUserPermissionsResponse {
+// Get permissions response message.
+message GetPermissionsResponse {
   // The name of the organization that these permissions are for, in format organizations/<org-id>
   string parent = 1;
-  // The name of the user that these permissions are for, in format users/<user-id>
-  string user_name = 2;
-  // The groups the user is in
-  repeated string user_groups = 3;
-  // The effective roles that this user has (both through direct role bindings and group memberships).
+  // The name of the principal that these permissions are for, in format users/<user-id>
+  string principal_name = 2;
+  // The groups the principal is in
+  repeated string principal_groups = 3;
+  // The effective roles that this principal has (both through direct role bindings and group memberships).
   repeated string role_names = 4;
-  // The permissions the user has on this organization.
+  // The permissions the principal has on this organization.
   repeated string permissions = 5;
 }
 
-// Check user permission request message.
-message CheckUserPermissionRequest {
+// Check permission request message.
+message CheckPermissionRequest {
   // The resource name of the organization, in format organizations/<org-id>.
   string parent = 1;
   // The permission to check for.
   string permission = 2;
 }
 
-// Check user permission response message.
-message CheckUserPermissionResponse {
+// Check permission response message.
+message CheckPermissionResponse {
   // The name of the organization that these permissions are for, in format organizations/<org-id>
   string name = 1;
-  // The name of the user that these permissions are for
-  string user_name = 2;
-  // The groups the user is in
-  repeated string user_groups = 3;
-  // The effective roles that this user has (both through direct role bindings and group memberships).
+  // The name of the principal that these permissions are for
+  string principal_name = 2;
+  // The groups the principal is in
+  repeated string principal_groups = 3;
+  // The effective roles that this principal has (both through direct role bindings and group memberships).
   repeated string role_names = 4;
   // The permission check that was requested
   string permission = 5;
-  // The result of the permission check - true if the user has the permission on this organization, false if otherwise
+  // The result of the permission check - true if the principal has the permission on this organization, false if otherwise
   bool result = 6;
 }
 
