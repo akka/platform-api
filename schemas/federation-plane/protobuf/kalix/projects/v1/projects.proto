@@ -1,22 +1,22 @@
 syntax = "proto3";
 
-package kalix.projects.v1alpha;
+package kalix.projects.v1;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
-import "kalix/auth/v1alpha/auth.proto";
+import "kalix/auth/v1/auth.proto";
 
 
 // See https://cloud.google.com/apis/design/file_structure#proto_options
-option go_package = "github.com/lightbend/kalix/cli/api/kalix/projects/v1alpha;projects";
-option csharp_namespace = "Kalix.Projects.V1Alpha";
+option go_package = "github.com/lightbend/kalix/cli/api/kalix/projects/v1;projects";
+option csharp_namespace = "Kalix.Projects.V1";
 option java_multiple_files = true;
 option java_outer_classname = "ProjectsProto";
-option java_package = "kalix.api.projects.v1alpha";
+option java_package = "kalix.api.projects.v1";
 option objc_class_prefix = "LBCSEV1AP";
-option php_namespace = "Kalix\\Projects\\V1alpha";
+option php_namespace = "Kalix\\Projects\\V1";
 
 // The Projects API manages Kalix projects, their membership, regions, and configuration.
 //
@@ -38,10 +38,10 @@ service Projects {
     option (google.api.http) = {
       // curl -v -H 'Accept-Encoding: application/json' -H 'Content-Type:
       // application/json' -H 'Authorization: Bearer XXX'
-      // https://api.kalix.io/kalix.io/v1alpha/projects
+      // https://api.kalix.io/kalix.io/v1/projects
       // -d '{project_id: XXX, project:{ "name": "Hello 22220", "friendly_name":
       // "Hi" }}'
-      post : "/kalix.io/v1alpha/projects"
+      post : "/kalix.io/v1/projects"
       body : "*"
     };
   }
@@ -51,7 +51,7 @@ service Projects {
   // Authentication required: yes
   rpc DeleteProject(DeleteProjectRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete : "/kalix.io/v1alpha/projects/"
+      delete : "/kalix.io/v1/projects/"
                "{name=projects/*}"
     };
   }
@@ -61,7 +61,7 @@ service Projects {
   // Authentication required: yes
   rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {
     option (google.api.http) = {
-      get : "/kalix.io/v1alpha/projects"
+      get : "/kalix.io/v1/projects"
     };
   }
 
@@ -70,7 +70,7 @@ service Projects {
   // Authentication required: yes
   rpc ListOrganizationBillingProjects(ListOrganizationBillingProjectsRequest) returns (ListProjectsResponse) {
     option (google.api.http) = {
-      get : "/kalix.io/v1alpha/billing-projects"
+      get : "/kalix.io/v1/billing-projects"
     };
   }
 
@@ -84,9 +84,9 @@ service Projects {
   rpc GetProject(GetProjectRequest) returns (Project) {
     // curl -v -H 'Accept-Encoding: application/json' -H 'Content-Type:
     // application/json' -H 'Authorization: Bearer XXX'
-    // https://api.kalix.io/kalix.io/v1alpha/projects/<uuid>
+    // https://api.kalix.io/kalix.io/v1/projects/<uuid>
     option (google.api.http) = {
-      get : "/kalix.io/v1alpha/{name=projects/*}"
+      get : "/kalix.io/v1/{name=projects/*}"
     };
   }
 
@@ -99,7 +99,7 @@ service Projects {
   // Project roles required: any
   rpc WatchProject(WatchProjectRequest) returns (stream WatchProjectEvent) {
     option (google.api.http) = {
-      get : "/kalix.io/v1alpha/{name=projects/*}:watch"
+      get : "/kalix.io/v1/{name=projects/*}:watch"
     };
   }
 
@@ -116,9 +116,9 @@ service Projects {
   rpc ListRoles(ListRolesRequest) returns (ListRolesResponse) {
     // curl -v -H 'Accept-Encoding: application/json' -H 'Content-Type:
     // application/json' -H 'Authorization: Bearer XXX'
-    // https://api.kalix.io/kalix.io/v1alpha/projects/<uuid>/roles
+    // https://api.kalix.io/kalix.io/v1/projects/<uuid>/roles
     option (google.api.http) = {
-      get : "/kalix.io/v1alpha/{parent=projects/*}/roles"
+      get : "/kalix.io/v1/{parent=projects/*}/roles"
     };
   }
 
@@ -129,7 +129,7 @@ service Projects {
   rpc ListRoleBindings(ListRoleBindingsRequest)
       returns (ListRoleBindingsResponse) {
     option (google.api.http) = {
-      get : "/kalix.io/v1alpha/{parent=projects/*}/roles/"
+      get : "/kalix.io/v1/{parent=projects/*}/roles/"
             "-/bindings"
     };
   }
@@ -140,7 +140,7 @@ service Projects {
   // Project roles required: admin
   rpc CreateRoleBinding(CreateRoleBindingRequest) returns (RoleBinding) {
     option (google.api.http) = {
-      post : "/kalix.io/v1alpha/{parent=projects/*/roles/"
+      post : "/kalix.io/v1/{parent=projects/*/roles/"
              "*}/bindings"
       body : "role_binding"
     };
@@ -153,7 +153,7 @@ service Projects {
   rpc DeleteRoleBinding(DeleteRoleBindingRequest)
       returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete : "/kalix.io/v1alpha/{name=projects/*/roles/"
+      delete : "/kalix.io/v1/{name=projects/*/roles/"
                "*/bindings/*}"
     };
   }
@@ -167,7 +167,7 @@ service Projects {
   // Authentication required: yes
   rpc CreateHostname(CreateHostnameRequest) returns (ListHostnamesResponse) {
     option (google.api.http) = {
-      post : "/kalix.io/v1alpha/{parent=projects/*}/hostnames"
+      post : "/kalix.io/v1/{parent=projects/*}/hostnames"
       body : "*"
     };
   }
@@ -180,7 +180,7 @@ service Projects {
   // Authentication required: yes
   rpc DeleteHostname(DeleteHostnameRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete : "/kalix.io/v1alpha/{name=projects/*/hostnames/*}"
+      delete : "/kalix.io/v1/{name=projects/*/hostnames/*}"
     };
   }
 
@@ -193,7 +193,7 @@ service Projects {
   // Authentication required: yes
   rpc ListHostnames(ListHostnamesRequest) returns (ListHostnamesResponse) {
     option (google.api.http) = {
-      get : "/kalix.io/v1alpha/{parent=projects/*}/hostnames"
+      get : "/kalix.io/v1/{parent=projects/*}/hostnames"
     };
   }
 
@@ -205,7 +205,7 @@ service Projects {
   // Authentication required: yes
   rpc UpdateHostname(UpdateHostnameRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      put : "/kalix.io/v1alpha/{name=projects/*/hostnames/*}"
+      put : "/kalix.io/v1/{name=projects/*/hostnames/*}"
     };
   }
 
@@ -216,7 +216,7 @@ service Projects {
   rpc CreateInvitation(CreateInvitationRequest)
       returns (CreateInvitationResponse) {
     option (google.api.http) = {
-      post : "/kalix.io/v1alpha/{parent=projects/*}/"
+      post : "/kalix.io/v1/{parent=projects/*}/"
              "invitations"
       body : "invitation"
     };
@@ -229,7 +229,7 @@ service Projects {
   rpc ListInvitations(ListInvitationsRequest)
       returns (ListInvitationsResponse) {
     option (google.api.http) = {
-      get : "/kalix.io/v1alpha/{parent=projects/*}/"
+      get : "/kalix.io/v1/{parent=projects/*}/"
             "invitations"
     };
   }
@@ -244,7 +244,7 @@ service Projects {
   rpc DeleteInvitation(DeleteInvitationRequest)
       returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete : "/kalix.io/v1alpha/{name=projects/*/"
+      delete : "/kalix.io/v1/{name=projects/*/"
                "invitations/*}"
     };
   }
@@ -260,7 +260,7 @@ service Projects {
   rpc AcceptInvitation(AcceptInvitationRequest)
       returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post : "/kalix.io/v1alpha/{name=projects/*/"
+      post : "/kalix.io/v1/{name=projects/*/"
              "invitations/*}:accept"
     };
   }
@@ -278,7 +278,7 @@ service Projects {
   // Authentication required: no
   rpc GetInvitation(GetInvitationRequest) returns (Invitation) {
     option (google.api.http) = {
-      get : "/kalix.io/v1alpha/{name=projects/*/"
+      get : "/kalix.io/v1/{name=projects/*/"
             "invitations/*}"
     };
   }
@@ -288,50 +288,8 @@ service Projects {
   // Authentication required: yes
   rpc ListRegions(ListRegionsRequest) returns (ListRegionsResponse) {
     option (google.api.http) = {
-      get : "/kalix.io/v1alpha/{parent=projects/*}/"
+      get : "/kalix.io/v1/{parent=projects/*}/"
             "regions"
-    };
-  }
-
-  // Set the message broker configuration for a project.
-  //
-  // Configures a message broker (Kafka or Azure Event Hubs) that services in this
-  // project can use for event streaming. Only one broker configuration can be
-  // active at a time per project.
-  //
-  // Authentication required: yes
-  // Project roles required: admin
-  rpc SetBrokerConfig(SetBrokerConfigRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      post : "/kalix.io/v1alpha/{parent=projects/*}/"
-             "brokerconfig"
-    };
-  }
-
-  // Delete the message broker configuration for a project.
-  //
-  // Removes the broker configuration. Services that depend on the broker will
-  // need to be reconfigured.
-  //
-  // Authentication required: yes
-  // Project roles required: admin
-  rpc DeleteBrokerConfig(DeleteBrokerConfigRequest)
-      returns (google.protobuf.Empty) {
-    option (google.api.http) = {
-      delete : "/kalix.io/v1alpha/{parent=projects/*}/"
-               "brokerconfig"
-    };
-  }
-
-  // Get the current message broker configuration for a project.
-  //
-  // Authentication required: yes
-  // Project roles required: any
-  rpc GetBrokerConfig(GetBrokerConfigRequest)
-      returns (GetBrokerConfigResponse) {
-    option (google.api.http) = {
-      get : "/kalix.io/v1alpha/{parent=projects/*}/"
-            "brokerconfig"
     };
   }
 
@@ -341,7 +299,7 @@ service Projects {
   // Project roles required: admin
   rpc CreateToken (CreateTokenRequest) returns (ServiceTokenValue) {
     option (google.api.http) = {
-            post: "/kalix.io/v1alpha/{parent=projects/*}/tokens"
+            post: "/kalix.io/v1/{parent=projects/*}/tokens"
         };
   }
 
@@ -351,7 +309,7 @@ service Projects {
   // Project roles required: admin
   rpc ListTokens (ListTokensRequest) returns (ListTokensResponse) {
     option (google.api.http) = {
-            get: "/kalix.io/v1alpha/{parent=projects/*}/tokens"
+            get: "/kalix.io/v1/{parent=projects/*}/tokens"
         };
   }
 
@@ -361,7 +319,7 @@ service Projects {
   // Project roles required: admin
   rpc DeleteToken (DeleteTokenRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-            delete: "/kalix.io/v1alpha/{name=projects/*/tokens/*}"
+            delete: "/kalix.io/v1/{name=projects/*/tokens/*}"
         };
   }
 
@@ -374,7 +332,7 @@ service Projects {
   // Project roles required: admin
   rpc UpdateProject(UpdateProjectRequest) returns (Project)  {
     option (google.api.http) = {
-      patch: "/kalix.io/v1alpha/projects"
+      patch: "/kalix.io/v1/projects"
       body: "project"
     };
   }
@@ -388,7 +346,7 @@ service Projects {
   // Project roles required: admin
   rpc AddRegion(AddRegionRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post: "/kalix.io/v1alpha/{parent=projects/*}/regions"
+      post: "/kalix.io/v1/{parent=projects/*}/regions"
       body: "*"
     };
   }
@@ -402,7 +360,7 @@ service Projects {
   // Project roles required: admin
   rpc SetPrimaryRegion(SetPrimaryRegionRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      put: "/kalix.io/v1alpha/{name=projects/*/regions/*}/primary"
+      put: "/kalix.io/v1/{name=projects/*/regions/*}/primary"
     };
   }
 
@@ -415,32 +373,32 @@ service Projects {
   // Project roles required: admin
   rpc DeleteRegion(DeleteRegionRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete: "/kalix.io/v1alpha/{name=projects/*/regions/*}"
+      delete: "/kalix.io/v1/{name=projects/*/regions/*}"
     };
   }
 
-  // Get all permissions the authenticated user has on a project.
+  // Get all permissions the authenticated principal has on a project.
   //
-  // Returns the user's roles and the full set of permissions those roles grant
+  // Returns the principal's roles and the full set of permissions those roles grant
   // on the specified project, including permissions inherited from organization-level
   // role bindings.
   //
   // Authentication required: yes
-  rpc GetUserPermissions(GetUserPermissionsRequest) returns (GetUserPermissionsResponse) {
+  rpc GetPermissions(GetPermissionsRequest) returns (GetPermissionsResponse) {
     option (google.api.http) = {
-      get: "/kalix.io/v1alpha/{parent=projects/*}/permissions"
+      get: "/kalix.io/v1/{parent=projects/*}/permissions"
     };
   }
 
-  // Check whether the authenticated user has a specific permission on a project.
+  // Check whether the authenticated principal has a specific permission on a project.
   //
-  // Returns the result of a single permission check for the authenticated user
+  // Returns the result of a single permission check for the authenticated principal
   // on the specified project.
   //
   // Authentication required: yes
-  rpc CheckUserPermission(CheckUserPermissionRequest) returns (CheckUserPermissionResponse) {
+  rpc CheckPermission(CheckPermissionRequest) returns (CheckPermissionResponse) {
     option (google.api.http) = {
-      get: "/kalix.io/v1alpha/{parent=projects/*}/permissions:check"
+      get: "/kalix.io/v1/{parent=projects/*}/permissions:check"
     };
   }
 
@@ -456,7 +414,7 @@ service Projects {
   rpc ListAllowedInstanceTypes(ListAllowedInstanceTypesRequest)
       returns (ListAllowedInstanceTypesResponse) {
     option (google.api.http) = {
-      get: "/kalix.io/v1alpha/{parent=projects/*}/instanceTypes"
+      get: "/kalix.io/v1/{parent=projects/*}/instanceTypes"
     };
   }
 
@@ -475,9 +433,6 @@ message WatchProjectRequest {
 
 // A watch project event.
 message WatchProjectEvent {
-  reserved 6, 7, 10, 11, 12;
-  reserved "broker_config_set", "log_aggregator_set", "log_aggregator_unset";
-
   // The resource name of the project, in format projects/<project-id>.
   string name = 1;
 
@@ -504,32 +459,24 @@ message WatchProjectEvent {
     string role_binding_deleted = 5;
 
     // An invitation that has been created.
-    Invitation invitation_added = 8;
+    Invitation invitation_added = 6;
 
     // The resource id of a invitation that has been either accepted or deleted, in the format
     // projects/<project-id>/invitations/<invitation-id>. If accepted, there will be an accompanying
     // role_binding event.
-    string invitation_actioned = 9;
-
-    // Sent when broker config has been unset.
-    string broker_config_unset = 13;
+    string invitation_actioned = 7;
 
     // Sent when a service token has been created.
-    ServiceToken token_created = 14;
+    ServiceToken token_created = 8;
 
     // The resource name of a token that has been deleted, in the format
     // projects/<project-id>/tokens/<token-id>
-    string token_deleted = 15;
-
-    // Sent when broker config is set.
-    BrokerConfig broker_config_set_v2 = 16;
-
+    string token_deleted = 9;
   }
 }
 
 // A project
 message Project {
-  reserved 4,6,9,10;
   // The project resource name, in format projects/<project-id>.
   string name = 1;
   // The project friendly name.
@@ -537,38 +484,31 @@ message Project {
   // A description of the project.
   string description = 3;
   // The owner of the project
-  OrganizationOwner owner = 5;
+  OrganizationOwner owner = 4;
   // The hostnames reserved for this project
-  repeated Hostname hostnames = 8;
-  // Deprecated: use `regions` field instead which includes full region details.
-  repeated string execution_cluster_names = 11 [deprecated = true];
-  // The broker config
-  GetBrokerConfigResponse broker_config = 12;
+  repeated Hostname hostnames = 5;
   // Time that the project was deleted
-  google.protobuf.Timestamp deleted = 13;
+  google.protobuf.Timestamp deleted = 7;
   // A token that can be used to view Grafana metrics for this project.
-  GrafanaToken grafana_token = 14;
-  // If deleted, the reason the projcet was deleted
-  string system_deletion_reason = 15;
+  GrafanaToken grafana_token = 8;
+  // If deleted, the reason the project was deleted
+  string system_deletion_reason = 9;
   // Time that the project was suspended
-  google.protobuf.Timestamp suspended = 16;
+  google.protobuf.Timestamp suspended = 10;
   // Full region details for the project's regions.
   // Populated in GetProject responses to avoid a separate ListRegions call.
-  repeated Region regions = 17;
+  repeated Region regions = 11;
   // The store cluster the project is assigned to, if one was pinned or resolved.
   // Empty when no store has been recorded yet. Surfaced by `akka project export`.
-  string store = 18;
+  string store = 12;
 }
 
 // An organization own of a project.
 message OrganizationOwner {
-  // The organization ID, e.g. "1a3fefd0-79e2-468b-b776-16ca1a16ffde" (UUID)
-  // Deprecated, use name instead
-  string id = 1 [deprecated=true];
+  // The resource name of the organization, in format organizations/<org-id>
+  string name = 1;
   // The friendly name of the organization
   string friendly_name = 2;
-  // The resource name of the organization, in format organizations/<org-id>
-  string name = 3;
 }
 
 // A hostname allocation to a project.
@@ -584,34 +524,22 @@ message Hostname {
   bool skip_provision_cert = 4;
 }
 
-// A project billing identifier.
-message BillingIdentifier {
-  // The uuid (equal to the billing owner user uuid)
-  string id = 1;
-  // Billing account type (currently: NO_CHARGE, TRIAL, CHARGE)
-  string billing_type = 2;
-}
-
 
 // A random UUID will ge generated on the server-side as the project ID
 message CreateProjectRequest {
-  reserved 3;
+  // The resource name of the owning organization
+  string organization_name = 1;
   // The friendly name for the project
-  string friendly_name = 1;
+  string friendly_name = 2;
   // A description of the projection
-  string description = 2;
+  string description = 3;
   // The id of the region that the project should be in
   string region_id = 4;
-  // The id of the owning organization
-  // Deprecated, using organization_name instead.
-  string organization_id = 5 [deprecated=true];
-  // The resource name of the owning organization
-  string organization_name = 6;
   // Optional store cluster to assign this project's database to. Requires store
   // selection to be enabled for the owning organization, and must be a cluster
   // configured and assignable in the region. Empty lets the platform resolve a
   // store automatically.
-  string store = 7;
+  string store = 5;
 }
 
 // Delete project request message.
@@ -793,9 +721,8 @@ message CreateInvitationRequest {
 
 // Create invitation response message.
 message CreateInvitationResponse {
-  reserved 1,2,3,4,6;
   // The created invitation.
-  Invitation invitation = 5;
+  Invitation invitation = 1;
 }
 
 // An invitation.
@@ -987,91 +914,6 @@ message GcpWorkloadIdentity {
   string oidc_issuer = 3;
 }
 
-message SetBrokerConfigRequest {
-  // The resource name of the project, in format projects/<project-id>.
-  string parent = 1;
-  // Deprecated.
-  string gcpProjectId = 2 [ deprecated = true ];
-  // Deprecated: use broker_config instead.
-  string json_key_file = 3 [ deprecated = true ];
-  // The type of broker being configured (e.g., "kafka", "azure-event-hubs").
-  string broker_type = 5;
-  // A human-readable description of this broker configuration.
-  string description = 6;
-  oneof config {
-    // A JSON configuration file for the broker (used for Google Pub/Sub and legacy Kafka).
-    string broker_config = 4;
-    // Configuration for a Kafka broker using SASL authentication.
-    KafkaSaslConfig kafka_sasl_config = 7;
-    // Configuration for an Azure Event Hubs broker.
-    AzureEventHubsConfig azure_event_hubs_config = 8;
-  }
-}
-
-// Configuration for connecting to a Kafka broker using SASL authentication.
-message KafkaSaslConfig {
-  // The SASL authentication mechanism (e.g., "PLAIN", "SCRAM-SHA-256", "SCRAM-SHA-512").
-  string auth_mechanism = 1;
-  // Comma-separated list of bootstrap servers in format <hostname>:<port>.
-  string servers = 2;
-  // The SASL username.
-  string username = 3;
-  // A reference to a project secret containing the SASL password.
-  SecretNameKey password_secret = 4;
-  // The name of a project secret containing the CA certificate for TLS verification.
-  // Leave empty if not using TLS or using a publicly trusted CA.
-  string ca_cert_secret = 5;
-}
-
-// Configuration for connecting to an Azure Event Hubs broker.
-message AzureEventHubsConfig {
-  // A reference to a project secret containing the Event Hubs connection string.
-  SecretNameKey connection_string_secret = 1;
-  // A reference to a project secret containing the SAS token for the Azure Blob
-  // Storage checkpoint store.
-  SecretNameKey checkpoint_store_sas_token_secret = 2;
-  // The Azure Blob Storage endpoint URL for the checkpoint store.
-  string checkpoint_store_endpoint = 3;
-  // The name of the Azure Blob Storage container used for checkpointing.
-  string checkpoint_store_container_name = 4;
-}
-
-// A reference to a specific key within a named project secret.
-message SecretNameKey {
-  // The name of the project secret.
-  string secretName = 1;
-  // The key within the secret to use.
-  string key = 2;
-}
-
-message DeleteBrokerConfigRequest {
-  // The resource name of the project, in format projects/<project-id>.
-  string parent = 1;
-  // NOTE: that we don't use gcpProjectId since we currently only support a
-  // single broker.
-  string gcpProjectId = 2 [ deprecated = true ];
-}
-
-message GetBrokerConfigRequest {
-  // The project this broker config belongs to.
-  string parent = 1;
-}
-
-// TODO: it is identical to BrokerConfig. Replace it with BrokerConfig once "sbt bufBreakingCheck" have machinery to support renaming
-message GetBrokerConfigResponse {
-  string broker_type = 1;
-  string description = 2;
-  oneof config {
-    KafkaSaslConfig kafkaSaslConfig = 3;
-    AzureEventHubsConfig azureEventHubsConfig = 4;
-  }
-}
-
-message BrokerConfig {
-  string broker_type = 1;
-  string description = 2;
-}
-
 // Create token request message.
 message CreateTokenRequest {
   // The resource name of the project, in format projects/<project-id>.
@@ -1079,7 +921,7 @@ message CreateTokenRequest {
   // A description of the token.
   string description = 2;
   // The scopes the the token should have.
-  repeated kalix.auth.v1alpha.TokenScope scopes = 3;
+  repeated kalix.auth.v1.TokenScope scopes = 3;
 }
 
 // List tokens request message.
@@ -1117,7 +959,7 @@ message ServiceToken {
   // Time that the token will expire, token never expires if unset.
   google.protobuf.Timestamp expire_time = 4;
   // The scopes the the token should have.
-  repeated kalix.auth.v1alpha.TokenScope scopes = 5;
+  repeated kalix.auth.v1.TokenScope scopes = 5;
 }
 
 // A service token along with the token value itself.
@@ -1166,20 +1008,20 @@ message DeleteRegionRequest {
   string name = 1;
 }
 
-// Get user permissions request message.
-message GetUserPermissionsRequest {
+// Get principal permissions request message.
+message GetPermissionsRequest {
   // The resource name of the project, in format projects/<project-id>.
   string parent = 1;
 }
 
-// Get user permissions response message.
-message GetUserPermissionsResponse {
+// Get principal permissions response message.
+message GetPermissionsResponse {
   // The name of the project that these permissions are for
   string project_name = 1;
-  // The name of the user that these permissions are for
-  string user_name = 2;
-  // The groups the user is in
-  repeated string user_groups = 3;
+  // The resource name of the principal that these permissions are for
+  string principal_name = 2;
+  // The groups the principal is in
+  repeated string principal_groups = 3;
   // The effective roles that this user has (both through direct role bindings and group memberships, at a project
   // level and owning organization level).
   repeated string role_names = 4;
@@ -1187,22 +1029,22 @@ message GetUserPermissionsResponse {
   repeated string permissions = 5;
 }
 
-// Check user permission request message.
-message CheckUserPermissionRequest {
+// Check principal permission request message.
+message CheckPermissionRequest {
   // The resource name of the project, in format projects/<project-id>.
   string parent = 1;
   // The permission to check.
   string permission = 2;
 }
 
-// Check user permission response message.
-message CheckUserPermissionResponse {
+// Check principal permission response message.
+message CheckPermissionResponse {
   // The name of the project that these permissions are for
   string project_name = 1;
-  // The name of the user that these permissions are for
-  string user_name = 2;
-  // The groups the user is in
-  repeated string user_groups = 3;
+  // The resource name of the principal that these permissions are for
+  string principal_name = 2;
+  // The groups the principal is in
+  repeated string principal_groups = 3;
   // The effective roles that this user has (both through direct role bindings and group memberships, at a project
   // level and owning organization level).
   repeated string role_names = 4;
