@@ -1,0 +1,293 @@
+syntax = "proto3";
+
+package kalix.auth.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+// See https://cloud.google.com/apis/design/file_structure#proto_options
+option go_package = "github.com/lightbend/kalix/cli/api/kalix/auth/v1;auth";
+option csharp_namespace = "Kalix.Auth.V1";
+option java_multiple_files = true;
+option java_outer_classname = "AuthProto";
+option java_package = "kalix.api.auth.v1";
+option objc_class_prefix = "LBCSEV1AP";
+option php_namespace = "Kalix\\Auth\\V1";
+
+// The Auth API provides token management for authenticating with Kalix APIs.
+//
+// Kalix uses a two-token model:
+//   - Refresh tokens (or session tokens) are long-lived and are obtained through
+//     user login (via the Users API). They cannot be used directly for API calls.
+//   - Access tokens are short-lived tokens derived from a refresh or session token.
+//     They are used to authenticate individual API requests.
+//
+// Service tokens (project-scoped tokens) follow the same model and are obtained
+// through the Projects API.
+service Auth {
+    // Create a container registry access token.
+    //
+    // Creates a short-lived token for authenticating with the Kalix container
+    // registry. The token provides access to push and pull container images for
+    // the authenticated user or service.
+    //
+    // Authentication required: yes
+    rpc CreateContainerRegistryToken(CreateContainerRegistryTokenRequest) returns (ContainerRegistryToken) {
+        option (google.api.http) = {
+            post: "/kalix.io/v1/container-registry/tokens"
+            body: "*"
+        };
+    }
+
+    // Create a short-lived access token.
+    //
+    // Derives a short-lived access token from the current refresh, session, or
+    // service token. Access tokens are used to authenticate individual API requests.
+    //
+    // Authentication required: yes (refresh, session, or service token)
+    rpc CreateAccessToken (CreateAccessTokenRequest) returns (AccessToken) {
+        option (google.api.http) = {
+            post: "/kalix.io/v1/auth/tokens"
+            body: "*"
+        };
+    }
+
+    // Get information about the current token.
+    //
+    // Returns details about the token used to make this request, including its
+    // type, the principal it belongs to, its expiry time, and the scopes it has.
+    //
+    // Authentication required: yes
+    rpc GetCurrentToken (GetCurrentTokenRequest) returns (CurrentToken) {
+        option (google.api.http) = {
+            get: "/kalix.io/v1/auth/current"
+        };
+    }
+
+    rpc CreateOAuthToken(CreateOAuthTokenRequest) returns (CreateOAuthTokenResponse) {
+        option (google.api.http) = {
+            post: "/oauth/token"
+            body: "*"
+        };
+    }
+}
+
+message CreateOAuthTokenRequest {
+    // The grant type.
+    //
+    // Specified in https://datatracker.ietf.org/doc/html/rfc6749#appendix-A.10.
+    //
+    // Supported grant types are:
+    //
+    // * authorization_code (https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3)
+    // * refresh_token (https://datatracker.ietf.org/doc/html/rfc6749#section-6)
+    // * urn:ietf:params:oauth:grant-type:token-exchange
+    string grant_type = 1;
+
+    // If using the authorization_code grant type, the authorization code.
+    //
+    // Specified in https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3.
+    string code = 2;
+
+    // If using the authorization_code grant type, and a redirect_uri parameter was included in the authorization
+    // request, then required, and must be identical to the parameter from the authorization request.
+    //
+    // Specified in https://datatracker.ietf.org/doc/html/rfc6749#appendix-A.6
+    string redirect_uri = 3;
+
+    // The client id.
+    //
+    // If the client is not authenticating with the authorization server, and the grant type is either
+    // authorization_code or refresh_token, then required. Also used when authenticating form based authentication.
+    //
+    // Specified in https://datatracker.ietf.org/doc/html/rfc6749#appendix-A.1
+    string client_id = 4;
+
+    // The client secret.
+    //
+    // See https://datatracker.ietf.org/doc/html/rfc6749#section-2.3.1.
+    string client_secret = 5;
+
+    // The scope. Multiple scopes should be separated by a space character.
+    //
+    // Specified in https://datatracker.ietf.org/doc/html/rfc6749#appendix-A.4.
+    string scope = 6;
+
+    // The refresh token, used for refresh_token grant types.
+    //
+    // See https://datatracker.ietf.org/doc/html/rfc6749#section-6
+    string refresh_token = 7;
+
+    // The resource, optional for token exchange requests.
+    //
+    // See https://datatracker.ietf.org/doc/html/rfc8693#section-2.1
+    string resource = 8;
+
+    // The audience, required for token exchange requests.
+    //
+    // This is used to indicate the configured OpenID Connect identity provider.
+    //
+    // For Akka services, it should be the region resource name in format regions/<region-id>.
+    //
+    // See https://datatracker.ietf.org/doc/html/rfc8693#section-2.1
+    string audience = 9;
+
+    // The requested token type, optional for token exchange requests.
+    //
+    // Only urn:ietf:params:oauth:token-type:access_token is supported, which is the default.
+    //
+    // See https://datatracker.ietf.org/doc/html/rfc8693#section-2.1
+    string requested_token_type = 10;
+
+    // The subject token, required for token exchange requests.
+    //
+    // See https://datatracker.ietf.org/doc/html/rfc8693#section-2.1
+    string subject_token = 11;
+
+    // The subject token type, required for token exchange requests.
+    //
+    // See https://datatracker.ietf.org/doc/html/rfc8693#TokenTypeIdentifiers
+    string subject_token_type = 12;
+}
+
+// OAuth Token response.
+//
+// This is specified in https://datatracker.ietf.org/doc/html/rfc6749#section-5.1
+message CreateOAuthTokenResponse {
+    // The access token issued by the authorization server. Required.
+    string access_token = 1 [json_name="access_token"];
+
+    // The type of token issued. Required.
+    string token_type = 2 [json_name="token_type"];
+
+    // The lifetime in seconds of the access token.
+    int64 expires_in = 3 [json_name="expires_in"];
+
+    // The refresh token, if requested.
+    string refresh_token = 4 [json_name="refresh_token"];
+
+    // The scope of the access token.
+    string scope = 5 [json_name="scope"];
+
+    // The issued token type.
+    //
+    // See https://datatracker.ietf.org/doc/html/rfc8693#TokenTypeIdentifiers
+    string issued_token_type = 6 [json_name="issued_token_type"];
+}
+
+// OAuth Token error response.
+//
+// This is specified in https://datatracker.ietf.org/doc/html/rfc6749#section-5.2
+message OAuthTokenError {
+    // The ASCII error code. Required.
+    string error = 1 [json_name="error"];
+
+    // Human readable ASCII text providing additional information.
+    string error_description = 2 [json_name="error_description"];
+
+    // The refresh token, if requested.
+    string error_uri = 3 [json_name="error_uri"];
+}
+
+// Create a container registry access token request.
+message CreateContainerRegistryTokenRequest{
+}
+
+// A short-lived token for authenticating with the Kalix container registry.
+message ContainerRegistryToken {
+    // The subject of the token (the authenticated user or service resource name).
+    string subject = 1;
+    // The token value. Use this as credentials when authenticating with the container registry.
+    string token = 2;
+    // When the token was created.
+    google.protobuf.Timestamp created_time = 3;
+    // When the token expires.
+    google.protobuf.Timestamp expire_time = 4;
+    // The Kalix scopes granted by this token.
+    repeated TokenScope scopes = 5;
+    // The container registry-specific scopes granted by this token (e.g., push, pull).
+    repeated string container_registry_scopes = 6;
+}
+
+// Create a short-lived access token request.
+message CreateAccessTokenRequest {
+}
+
+// A short-lived access token for making Kalix API requests.
+message AccessToken {
+    // The subject of this access token — the name of the refresh, session, or
+    // service token that was used to create it.
+    string subject = 1;
+    // The token value. Pass this as a Bearer token in the Authorization header.
+    string token = 2;
+    // When the token was created.
+    google.protobuf.Timestamp created_time = 3;
+    // When the token expires.
+    google.protobuf.Timestamp expire_time = 4;
+    // The scopes this token grants access to.
+    repeated TokenScope scopes = 5;
+}
+
+// Get information about the current token.
+message GetCurrentTokenRequest {
+}
+
+// Information about the current token
+message CurrentToken {
+    // The name of the current principal. Will either be a user (prefixed with names/) or a project (prefixed with projects/)
+    string name = 1;
+    // The type of token used to login.
+    TokenType token_type = 2;
+    // The name of the token.
+    string token_name = 3;
+    // When this token was created.
+    google.protobuf.Timestamp created_time = 4;
+    // When this token expires.
+    google.protobuf.Timestamp expire_time = 5;
+    // The scopes this token has access to.
+    repeated TokenScope scopes = 6;
+    // Description of this token or the token used to create it.
+    string description = 7;
+    // The groups that a user is in according to the token
+    repeated string groups = 8;
+}
+
+// The scope of a token.
+enum TokenScope {
+    // Can do everything
+    ALL = 0;
+
+    // Can read/write projects
+    PROJECTS = 1;
+
+    // Can read/write the user, including create new tokens
+    USER = 2;
+
+    // Can access the execution servers (ie, kubernetes). Only works with session tokens.
+    EXECUTION = 3;
+
+    // Can access organizations
+    ORGANIZATIONS = 4;
+
+    // Can access container registry
+    CONTAINER_REGISTRY = 5;
+}
+
+// A token type.
+enum TokenType {
+    // A long lived persistent token that represents a user. Can only be used to
+    // create access tokens. Can be revoked.
+    REFRESH = 0;
+
+    // A short lived token that can be obtained using another token. Can't be
+    // revoked.
+    ACCESS = 1;
+
+    // A medium lived token that represents a user, used for web access etc.
+    // Stays active as long as its used. Can be revoked.
+    SESSION = 2;
+
+    // A token representing a service that has access to a single project. Can
+    // only be used to create access tokens. Can be revoked.
+    SERVICE = 3;
+}
