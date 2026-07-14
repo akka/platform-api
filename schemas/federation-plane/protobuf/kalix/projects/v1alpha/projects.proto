@@ -703,6 +703,7 @@ message RoleBinding {
   // * Akka services: regions/{regionId}/projects/{projectId}/services/{serviceName}
   // * Akka service region groups: regiongroups/{regionGroupId}/projects/{projectId}/services/{serviceName}
   // * Workload identities: organizations/{orgId}/identityproviders/{providerId}/subject/{subject}
+  // * Workload identity claims: organizations/{orgId}/identityproviders/{providerId}/claims/{claimName}/{claimValue}
   string principal = 2;
 
   // Output only. Email of the user.
