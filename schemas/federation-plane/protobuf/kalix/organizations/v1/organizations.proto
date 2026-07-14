@@ -479,6 +479,7 @@ message RoleBinding {
   // * Akka services: regions/{regionId}/projects/{projectId}/services/{serviceName}
   // * Akka service region groups: regiongroups/{regionGroupId}/projects/{projectId}/services/{serviceName}
   // * Workload identities: organizations/{orgId}/identityproviders/{providerId}/subject/{subject}
+  // * Workload identity claims: organizations/{orgId}/identityproviders/{providerId}/claims/{claimName}/{claimValue}
   string principal = 5;
   // Whether the user has MFA enabled.
   bool mfa_enabled = 6;
@@ -840,9 +841,9 @@ message ListWorkloadIdentityProvidersResponse {
 message CreateWorkloadIdentityProviderRequest {
   // The resource name of the organization, in format organizations/<org-id>.
   string parent = 1;
-  // The workload identity provider to create. The name field is ignored; the
-  // server generates a unique provider id and returns the full resource name
-  // in the response.
+  // The desired id of the identity provider
+  string id = 3;
+  // The workload identity provider to create. The name field is ignored.
   WorkloadIdentityProvider workload_identity_provider = 2;
 }
 
