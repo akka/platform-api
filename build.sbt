@@ -4,9 +4,6 @@ name := "akka-platform-api"
 
 disablePlugins(OpenApiGeneratorPlugin)
 
-inThisBuild(
-  resolvers += "Akka library repository".at("https://repo.akka.io/maven"),
-)
 
 lazy val root = (project in file("."))
   .enablePlugins(ControlPlaneApis)
