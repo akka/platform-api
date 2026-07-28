@@ -1,7 +1,7 @@
 package io.akka.platformapi;
 
-import kalix.api.auth.v1alpha.AuthClient;
-import kalix.api.auth.v1alpha.CreateOAuthTokenRequest;
+import kalix.api.auth.v1.AuthClient;
+import kalix.api.auth.v1.CreateOAuthTokenRequest;
 
 import java.io.IOException;
 import java.time.Instant;

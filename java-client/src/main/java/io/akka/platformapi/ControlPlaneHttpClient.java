@@ -1,6 +1,6 @@
 package io.akka.platformapi;
 
-import kalix.api.projects.v1alpha.Region;
+import kalix.api.projects.v1.Region;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;

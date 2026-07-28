@@ -13,14 +13,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import kalix.api.auth.v1alpha.AuthClient;
-import kalix.api.organizations.v1alpha.OrganizationsClient;
-import kalix.api.projects.v1alpha.ListProjectsRequest;
-import kalix.api.projects.v1alpha.ListRegionsRequest;
-import kalix.api.projects.v1alpha.ListRegionsResponse;
-import kalix.api.projects.v1alpha.ProjectsClient;
-import kalix.api.projects.v1alpha.Region;
-import kalix.api.users.v1alpha.UsersClient;
+import kalix.api.auth.v1.AuthClient;
+import kalix.api.organizations.v1.OrganizationsClient;
+import kalix.api.projects.v1.ListProjectsRequest;
+import kalix.api.projects.v1.ListRegionsRequest;
+import kalix.api.projects.v1.ListRegionsResponse;
+import kalix.api.projects.v1.ProjectsClient;
+import kalix.api.projects.v1.Region;
+import kalix.api.users.v1.UsersClient;
 
 /**
  * Entry point for the Akka Platform SDK.
