@@ -1,4 +1,4 @@
-# Akka Platform API
+# Akka Platform API 
 
 Libraries and schemas for interacting with the Akka Platform API. The API has two planes:
 
