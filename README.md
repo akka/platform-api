@@ -30,6 +30,36 @@ Store the token value securely. It is shown only once.
 
 The `java-client` module provides a ready-to-use SDK that handles token acquisition and caching, gRPC channel management, and automatic routing of control plane requests to the correct regional endpoint.
 
+### Installation
+
+Akka artifacts are served from Akka's secured maven repository, which requires a token. Generate a token and copy the exact repository configuration for your build tool from **https://account.akka.io/token**.
+
+Then depend on `io.akka:akka-platform-api-java-client`, replacing `VERSION` with the [latest release](https://github.com/akka/platform-api/releases):
+
+**Maven**
+
+```xml
+<dependency>
+  <groupId>io.akka</groupId>
+  <artifactId>akka-platform-api-java-client</artifactId>
+  <version>VERSION</version>
+</dependency>
+```
+
+**Gradle**
+
+```kotlin
+dependencies {
+    implementation("io.akka:akka-platform-api-java-client:VERSION")
+}
+```
+
+**sbt**
+
+```scala
+libraryDependencies += "io.akka" % "akka-platform-api-java-client" % "VERSION"
+```
+
 ### Configuration
 
 **Refresh token — environment variable**
