@@ -1,0 +1,53 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish to Cloudsmith
+    runs-on: Akka-Default-Latest
+    if: github.event.repository.fork == false
+    steps:
+    - name: Checkout Global Scripts
+      # https://github.com/actions/checkout/releases
+      uses: actions/checkout@v6
+      with:
+        repository: akka/github-actions-scripts
+        path: github-actions-scripts
+
+    - name: Setup global resolver
+      run: |
+        chmod +x ./github-actions-scripts/setup_global_resolver.sh
+        ./github-actions-scripts/setup_global_resolver.sh
+
+    - name: Checkout
+      # https://github.com/actions/checkout/releases
+      uses: actions/checkout@v6
+      with:
+        # fetch the full history (incl. tags) so sbt-dynver can derive the version
+        fetch-depth: 0
+
+    - name: Cache Coursier cache
+      # https://github.com/coursier/cache-action/releases
+      uses: coursier/cache-action@v8.1.0
+
+    - name: Set up JDK 25
+      # https://github.com/coursier/setup-action/releases
+      uses: coursier/setup-action@v3.0.0
+      with:
+        jvm: temurin:1.25
+        apps: sbt
+
+    - name: Publish
+      env:
+        PUBLISH_USER: ${{ secrets.PUBLISH_USER }}
+        PUBLISH_PASSWORD: ${{ secrets.PUBLISH_PASSWORD }}
+        PGP_SECRET: ${{ secrets.PGP_SECRET }}
+        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+      run: sbt "java-client/publishSigned"
