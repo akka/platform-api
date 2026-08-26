@@ -10,11 +10,11 @@ disablePlugins(OpenApiGeneratorPlugin)
 inThisBuild(
   Seq(
     organization := "io.akka",
-    organizationName := "Lightbend Inc.",
+    organizationName := "Akka",
     organizationHomepage := Some(url("https://akka.io")),
     homepage := Some(url("https://github.com/akka/platform-api")),
-    description := "Java client library for the Akka Platform APIs",
-    startYear := Some(2025),
+    description := "Akka Platform API Java client library",
+    startYear := Some(2026),
     licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
     developers := List(
       Developer(
