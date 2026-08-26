@@ -1,17 +1,18 @@
-name: Platform API CI/CD
+name: Publish
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ '**' ]
+    tags: ["v*"]
 
-env:
-  JAVA_OPTS: -XX:+UseCompactObjectHeaders
+permissions:
+  contents: read
 
 jobs:
-  run_tests:
+  publish:
+    name: Publish to Cloudsmith
     runs-on: Akka-Default-Latest
+    if: github.event.repository.fork == false
     steps:
     - name: Set up global resolver
       uses: akka/github-actions-scripts/setup_global_resolver@main
@@ -19,6 +20,9 @@ jobs:
     - name: Checkout
       # https://github.com/actions/checkout/releases
       uses: actions/checkout@v6
+      with:
+        # fetch the full history (incl. tags) so sbt-dynver can derive the version
+        fetch-depth: 0
 
     - name: Cache Coursier cache
       # https://github.com/coursier/cache-action/releases
@@ -31,5 +35,10 @@ jobs:
         jvm: temurin:1.25
         apps: sbt
 
-    - name: Run tests
-      run: sbt "test"
+    - name: Publish
+      env:
+        PUBLISH_USER: ${{ secrets.PUBLISH_USER }}
+        PUBLISH_PASSWORD: ${{ secrets.PUBLISH_PASSWORD }}
+        PGP_SECRET: ${{ secrets.PGP_SECRET }}
+        PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
+      run: sbt "java-client/publishSigned"

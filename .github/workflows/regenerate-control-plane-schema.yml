@@ -14,18 +14,8 @@ jobs:
       id-token: write
       pull-requests: write
     steps:
-    - name: Checkout Global Scripts
-      # https://github.com/actions/checkout/releases
-      uses: actions/checkout@v6
-      with:
-        repository: akka/github-actions-scripts
-        path: github-actions-scripts
-
-    - name: Setup global resolver
-      run: |
-        chmod +x ./github-actions-scripts/setup_global_resolver.sh
-        ./github-actions-scripts/setup_global_resolver.sh
-        cp -r ./github-actions-scripts ~/
+    - name: Set up global resolver
+      uses: akka/github-actions-scripts/setup_global_resolver@main
 
     - name: Checkout
       # https://github.com/actions/checkout/releases

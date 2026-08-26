@@ -1,15 +1,59 @@
 import java.nio.file.Path
+import sbtdynver.DynVerPlugin.autoImport.dynverSonatypeSnapshots
+import com.geirsson.CiReleasePlugin
+import com.jsuereth.sbtpgp.PgpKeys.publishSigned
 
 name := "akka-platform-api"
 
 disablePlugins(OpenApiGeneratorPlugin)
 
+inThisBuild(
+  Seq(
+    organization := "io.akka",
+    organizationName := "Akka",
+    organizationHomepage := Some(url("https://akka.io")),
+    homepage := Some(url("https://github.com/akka/platform-api")),
+    description := "Akka Platform API Java client library",
+    startYear := Some(2026),
+    licenses := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0")),
+    developers := List(
+      Developer(
+        id = "akka-developers",
+        name = "Akka Developers",
+        email = "akka.official@gmail.com",
+        url = url("https://akka.io"))),
+    scmInfo := Some(
+      ScmInfo(url("https://github.com/akka/platform-api"), "scm:git@github.com:akka/platform-api.git")),
+    dynverSonatypeSnapshots := true,
+  ))
+
+lazy val cloudsmithPublishSettings: Seq[Setting[_]] = Seq(
+  publishTo := (
+    if (isSnapshot.value) Some("Cloudsmith API".at("https://maven.cloudsmith.io/lightbend/akka-snapshots/"))
+    else Some("Cloudsmith API".at("https://maven.cloudsmith.io/lightbend/akka/"))
+  ),
+  credentials ++= {
+    (sys.env.get("PUBLISH_USER"), sys.env.get("PUBLISH_PASSWORD")) match {
+      case (Some(user), Some(password)) =>
+        Seq(Credentials("Cloudsmith API", "maven.cloudsmith.io", user, password))
+      case _ => Nil
+    }
+  },
+  pomIncludeRepository := (_ => false),
+  publishConfiguration := publishConfiguration.value.withOverwrite(true),
+  publishLocalConfiguration := publishLocalConfiguration.value.withOverwrite(true),
+  setupGpgForPublish := { if (sys.env.contains("PGP_SECRET")) CiReleasePlugin.setupGpg() },
+  publishSigned := publishSigned.dependsOn(setupGpgForPublish).value,
+)
+
+lazy val setupGpgForPublish = taskKey[Unit]("Import the PGP key before signing artifacts")
 
 lazy val root = (project in file("."))
   .enablePlugins(ControlPlaneApis)
   .aggregate(`java-client`)
   .settings(
     scalaVersion := "2.13.18",
+    publish / skip := true,
   )
 
 val JacksonVersion = "2.21.1"
@@ -22,10 +66,14 @@ val openApiGenerateIncremental = taskKey[Seq[Path]]("openApiGenerate task that o
 
 lazy val `java-client` = (project in file("java-client"))
   .enablePlugins(OpenApiGeneratorPlugin, AkkaGrpcPlugin)
+  .settings(cloudsmithPublishSettings)
   .settings(
     name := "akka-platform-api-java-client",
 
     scalaVersion := "2.13.18",
+    crossPaths := false,
+
+    Compile / packageDoc / publishArtifact := false,
 
     (Compile / managedSourceDirectories) += target.value / "open-id-generator" / "src" / "main" / "java",
 
