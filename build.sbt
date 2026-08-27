@@ -122,6 +122,7 @@ lazy val `java-client` = (project in file("java-client"))
       "org.openapitools" % "jackson-databind-nullable" % JacksonDatabindNullableVersion,
       "com.google.code.findbugs" % "jsr305" % Jsr305Version,
       "jakarta.annotation" % "jakarta.annotation-api" % JakartaAnnotationVersion % Provided,
+      "com.github.sbt.junit" % "jupiter-interface" % JupiterKeys.jupiterVersion.value % Test,
     )
 
   )
