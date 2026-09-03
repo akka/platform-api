@@ -337,17 +337,17 @@
         "parameters" : [ ],
         "requestBody" : {
           "content" : {
+            "application/merge-patch+json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Patch"
+              }
+            },
             "application/apply-patch+yaml" : {
               "schema" : {
                 "$ref" : "#/components/schemas/Patch"
               }
             },
             "application/json-patch+json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/Patch"
-              }
-            },
-            "application/merge-patch+json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/Patch"
               }
@@ -734,17 +734,17 @@
         "parameters" : [ ],
         "requestBody" : {
           "content" : {
+            "application/merge-patch+json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Patch"
+              }
+            },
             "application/apply-patch+yaml" : {
               "schema" : {
                 "$ref" : "#/components/schemas/Patch"
               }
             },
             "application/json-patch+json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/Patch"
-              }
-            },
-            "application/merge-patch+json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/Patch"
               }
@@ -1131,17 +1131,17 @@
         "parameters" : [ ],
         "requestBody" : {
           "content" : {
+            "application/merge-patch+json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Patch"
+              }
+            },
             "application/apply-patch+yaml" : {
               "schema" : {
                 "$ref" : "#/components/schemas/Patch"
               }
             },
             "application/json-patch+json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/Patch"
-              }
-            },
-            "application/merge-patch+json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/Patch"
               }
@@ -1528,17 +1528,17 @@
         "parameters" : [ ],
         "requestBody" : {
           "content" : {
+            "application/merge-patch+json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Patch"
+              }
+            },
             "application/apply-patch+yaml" : {
               "schema" : {
                 "$ref" : "#/components/schemas/Patch"
               }
             },
             "application/json-patch+json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/Patch"
-              }
-            },
-            "application/merge-patch+json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/Patch"
               }
@@ -1925,17 +1925,17 @@
         "parameters" : [ ],
         "requestBody" : {
           "content" : {
+            "application/merge-patch+json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Patch"
+              }
+            },
             "application/apply-patch+yaml" : {
               "schema" : {
                 "$ref" : "#/components/schemas/Patch"
               }
             },
             "application/json-patch+json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/Patch"
-              }
-            },
-            "application/merge-patch+json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/Patch"
               }
@@ -2322,17 +2322,17 @@
         "parameters" : [ ],
         "requestBody" : {
           "content" : {
+            "application/merge-patch+json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Patch"
+              }
+            },
             "application/apply-patch+yaml" : {
               "schema" : {
                 "$ref" : "#/components/schemas/Patch"
               }
             },
             "application/json-patch+json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/Patch"
-              }
-            },
-            "application/merge-patch+json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/Patch"
               }
@@ -2719,17 +2719,17 @@
         "parameters" : [ ],
         "requestBody" : {
           "content" : {
+            "application/merge-patch+json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Patch"
+              }
+            },
             "application/apply-patch+yaml" : {
               "schema" : {
                 "$ref" : "#/components/schemas/Patch"
               }
             },
             "application/json-patch+json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/Patch"
-              }
-            },
-            "application/merge-patch+json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/Patch"
               }
@@ -3116,17 +3116,17 @@
         "parameters" : [ ],
         "requestBody" : {
           "content" : {
+            "application/merge-patch+json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Patch"
+              }
+            },
             "application/apply-patch+yaml" : {
               "schema" : {
                 "$ref" : "#/components/schemas/Patch"
               }
             },
             "application/json-patch+json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/Patch"
-              }
-            },
-            "application/merge-patch+json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/Patch"
               }
@@ -3513,17 +3513,17 @@
         "parameters" : [ ],
         "requestBody" : {
           "content" : {
+            "application/merge-patch+json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Patch"
+              }
+            },
             "application/apply-patch+yaml" : {
               "schema" : {
                 "$ref" : "#/components/schemas/Patch"
               }
             },
             "application/json-patch+json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/Patch"
-              }
-            },
-            "application/merge-patch+json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/Patch"
               }
@@ -3910,17 +3910,17 @@
         "parameters" : [ ],
         "requestBody" : {
           "content" : {
+            "application/merge-patch+json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Patch"
+              }
+            },
             "application/apply-patch+yaml" : {
               "schema" : {
                 "$ref" : "#/components/schemas/Patch"
               }
             },
             "application/json-patch+json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/Patch"
-              }
-            },
-            "application/merge-patch+json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/Patch"
               }

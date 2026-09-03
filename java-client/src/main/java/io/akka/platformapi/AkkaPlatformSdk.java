@@ -121,10 +121,17 @@ public final class AkkaPlatformSdk implements Closeable {
         GrpcClientSettings settings = unauthedSettings.withCallCredentials(new CallCredentials() {
             @Override
             public void applyRequestMetadata(RequestInfo requestInfo, Executor appExecutor, MetadataApplier applier) {
-                tokenCache.getToken().thenAccept(token -> {
-                    var metadata = new Metadata();
-                    metadata.put(AUTHORIZATION, "Bearer " + token);
-                    applier.apply(metadata);
+                tokenCache.getToken().whenComplete((token, error) -> {
+                    if (error != null) {
+                        // Fail the call immediately instead of leaving it hanging until the deadline.
+                        applier.fail(io.grpc.Status.UNAUTHENTICATED
+                                .withDescription("Failed to obtain access token: " + error.getMessage())
+                                .withCause(error));
+                    } else {
+                        var metadata = new Metadata();
+                        metadata.put(AUTHORIZATION, "Bearer " + token);
+                        applier.apply(metadata);
+                    }
                 });
             }
         });

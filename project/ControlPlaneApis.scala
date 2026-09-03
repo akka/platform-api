@@ -172,6 +172,21 @@ object ControlPlaneApis extends AutoPlugin {
     "force"
   )
 
+  private val MergePatchContentType = "application/merge-patch+json"
+
+  // The OpenAPI generator uses the first request body content type as the request's
+  // Content-Type. Put merge-patch first so generated patch operations use it:
+  // apply-patch requires a fieldManager parameter that is not modelled in this schema.
+  private def preferMergePatch(spec: JsObject): JsObject =
+    (spec \ "requestBody" \ "content").asOpt[JsObject] match {
+      case Some(content) if content.value.contains(MergePatchContentType) =>
+        val reordered = JsObject(
+          Seq(MergePatchContentType -> content(MergePatchContentType)) ++
+            content.value.toSeq.filterNot(_._1 == MergePatchContentType))
+        spec + ("requestBody" -> ((spec \ "requestBody").as[JsObject] + ("content" -> reordered)))
+      case _ => spec
+    }
+
   private def transformOperation(spec: JsObject): JsObject = {
     // Rename operation id
     val operationId = renameOperationId((spec \ "operationId").as[String])
@@ -184,7 +199,7 @@ object ControlPlaneApis extends AutoPlugin {
       }
     val description = (spec \ "description").as[String].replaceAll("Kalix", "")
 
-    spec ++
+    preferMergePatch(spec) ++
       Json.obj(
         "operationId" -> operationId,
         "description" -> description,
