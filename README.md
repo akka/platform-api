@@ -291,7 +291,7 @@ Close the SDK when your application shuts down to release the underlying gRPC ch
 sdk.close();
 ```
 
-When embedding the SDK in a long-running application, create one instance at startup and share it; the clients are thread-safe and tokens are cached across calls. To reuse an existing `ActorSystem` instead of letting the SDK manage its own, use `AkkaPlatformSdk.create(config, system)`.
+When embedding the SDK in a long-running application, create one instance at startup and share it; the clients are thread-safe and tokens are cached across calls.
 
 ---
 
