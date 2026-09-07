@@ -3,12 +3,17 @@ package io.akka.platformapi;
 import akka.actor.ActorSystem;
 import akka.grpc.GrpcClientSettings;
 import io.akka.platformapi.controlplane.ApiClient;
+import io.akka.platformapi.controlplane.ApiException;
 import io.akka.platformapi.controlplane.api.AkkaControlPlaneApi;
+import io.akka.platformapi.controlplane.model.Service;
 import io.grpc.CallCredentials;
 import io.grpc.Metadata;
 import java.io.Closeable;
 import java.net.http.HttpClient;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -121,10 +126,17 @@ public final class AkkaPlatformSdk implements Closeable {
         GrpcClientSettings settings = unauthedSettings.withCallCredentials(new CallCredentials() {
             @Override
             public void applyRequestMetadata(RequestInfo requestInfo, Executor appExecutor, MetadataApplier applier) {
-                tokenCache.getToken().thenAccept(token -> {
-                    var metadata = new Metadata();
-                    metadata.put(AUTHORIZATION, "Bearer " + token);
-                    applier.apply(metadata);
+                tokenCache.getToken().whenComplete((token, error) -> {
+                    if (error != null) {
+                        // Fail the call immediately instead of leaving it hanging until the deadline.
+                        applier.fail(io.grpc.Status.UNAUTHENTICATED
+                                .withDescription("Failed to obtain access token: " + error.getMessage())
+                                .withCause(error));
+                    } else {
+                        var metadata = new Metadata();
+                        metadata.put(AUTHORIZATION, "Bearer " + token);
+                        applier.apply(metadata);
+                    }
                 });
             }
         });
@@ -258,6 +270,56 @@ public final class AkkaPlatformSdk implements Closeable {
      */
     public void clearRegionCache() {
         regionCache.clear();
+    }
+
+    // -------------------------------------------------------------------------
+    // Service operations
+    // -------------------------------------------------------------------------
+
+    /**
+     * Pauses a service: all of its instances are stopped until it is resumed.
+     * Equivalent to {@code akka service pause}.
+     *
+     * @param projectId the project UUID
+     * @param serviceName the service name
+     * @return the updated service
+     */
+    public CompletableFuture<Service> pauseService(String projectId, String serviceName)
+            throws ApiException {
+        return setServicePaused(projectId, serviceName, true);
+    }
+
+    /**
+     * Resumes a paused service. Equivalent to {@code akka service resume}.
+     *
+     * @param projectId the project UUID
+     * @param serviceName the service name
+     * @return the updated service
+     */
+    public CompletableFuture<Service> resumeService(String projectId, String serviceName)
+            throws ApiException {
+        return setServicePaused(projectId, serviceName, false);
+    }
+
+    /**
+     * Requests a rolling restart of a running service, without pausing it.
+     * Equivalent to {@code akka service restart}.
+     *
+     * @param projectId the project UUID
+     * @param serviceName the service name
+     * @return the updated service
+     */
+    public CompletableFuture<Service> restartService(String projectId, String serviceName)
+            throws ApiException {
+        var restartRequested = Instant.now().truncatedTo(ChronoUnit.SECONDS).toString();
+        return controlPlaneApiInstance.patchService(serviceName, projectId,
+                Map.of("spec", Map.of("restartRequested", restartRequested)));
+    }
+
+    private CompletableFuture<Service> setServicePaused(String projectId, String serviceName, boolean paused)
+            throws ApiException {
+        return controlPlaneApiInstance.patchService(serviceName, projectId,
+                Map.of("spec", Map.of("paused", paused)));
     }
 
     // -------------------------------------------------------------------------
