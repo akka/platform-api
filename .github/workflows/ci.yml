@@ -32,4 +32,43 @@ jobs:
         apps: sbt
 
     - name: Run tests
-      run: sbt "test"
+      run: sbt "testOnly * -- --exclude-tags=smoke"
+
+  smoke_test:
+    runs-on: Akka-Default-Latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AKKA_API_HOST: api.kalix.st:443
+      AKKA_OAUTH_TOKEN_AUDIENCE: organizations/1b413cae-993d-43e2-862b-0405e8439520/identityproviders/github
+    steps:
+    - name: Set up global resolver
+      uses: akka/github-actions-scripts/setup_global_resolver@main
+
+    - name: Checkout
+      # https://github.com/actions/checkout/releases
+      uses: actions/checkout@v6
+
+    - name: Cache Coursier cache
+      # https://github.com/coursier/cache-action/releases
+      uses: coursier/cache-action@v8.1.0
+
+    - name: Set up JDK 25
+      # https://github.com/coursier/setup-action/releases
+      uses: coursier/setup-action@v3.0.0
+      with:
+        jvm: temurin:1.25
+        apps: sbt
+
+    - name: Get GitHub OIDC token for Akka workload identity
+      # https://github.com/actions/github-script/releases
+      uses: actions/github-script@v9
+      with:
+        script: |
+          const token = await core.getIDToken(process.env.AKKA_OAUTH_TOKEN_AUDIENCE);
+          core.setSecret(token);
+          core.exportVariable('AKKA_OAUTH_TOKEN', token);
+
+    - name: Run smoke test
+      run: sbt "java-client/testOnly io.akka.platformapi.AkkaPlatformSdkSmokeTest"
