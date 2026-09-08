@@ -141,6 +141,20 @@ AkkaPlatformSdk sdk = AkkaPlatformSdk.create(
     AkkaPlatformSdkConfig.of(new MyTokenConfig(), "api.kalix.io:443"));
 ```
 
+### Asynchronous and blocking use
+
+All client methods return a `CompletionStage` or `CompletableFuture`. Compose them asynchronously, or block with `join()` when the calling thread can afford it. On virtual threads (for example inside an Akka SDK endpoint) blocking is the simpler style:
+
+```java
+var user = sdk.users()
+    .getAuthenticatedUser(Empty.getDefaultInstance())
+    .toCompletableFuture()
+    .join();
+System.out.println("Authenticated as " + user.getUser().getEmail());
+```
+
+`getAuthenticatedUser` is also a convenient first call to verify that the configured credentials work.
+
 ### Looking up a project
 
 Projects are identified by a UUID internally. Use `resolveProjectId` to translate a friendly name to the UUID required by the control plane API:
@@ -158,6 +172,20 @@ sdk.projects()
     .thenAccept(response ->
         response.getProjectsList().forEach(p ->
             System.out.println(p.getFriendlyName() + " → " + p.getName())));
+```
+
+Results are paged. Set `pageSize` on the request and pass the response's `nextPageToken` as `pageToken` on the next request until it is empty.
+
+To get the details of a single project, including its regions and hostnames:
+
+```java
+sdk.projects()
+    .getProject(GetProjectRequest.newBuilder()
+        .setName("projects/" + projectId)
+        .build())
+    .thenAccept(project ->
+        project.getRegionsList().forEach(r ->
+            System.out.println(r.getName() + (r.getPrimary() ? " (primary)" : ""))));
 ```
 
 ### Getting a service
@@ -202,6 +230,27 @@ sdk.resolveProjectId("my-project").thenCompose(projectId ->
     System.out.println("Created: " + created.getMetadata().getName()));
 ```
 
+### Pausing, resuming, and restarting a service
+
+`AkkaPlatformSdk` provides helpers for the common lifecycle operations, equivalent to `akka service pause`, `akka service resume`, and `akka service restart`:
+
+```java
+sdk.pauseService(projectId, "my-service");    // stop all instances
+sdk.resumeService(projectId, "my-service");   // start a paused service
+sdk.restartService(projectId, "my-service");  // rolling restart of a running service
+```
+
+Each returns a `CompletableFuture` with the updated `Service`.
+
+### Updating a service
+
+For other partial updates, use `patchService`. The request body is a merge patch: include only the fields to change, and the rest of the service is left untouched.
+
+```java
+api.patchService("my-service", projectId,
+    Map.of("spec", Map.of("replicas", 3)));
+```
+
 ### Explicit region routing
 
 By default `controlPlaneApi()` routes to the primary region. To target a specific region (e.g. for multi-region projects):
@@ -215,6 +264,25 @@ If the specified region is not associated with the project identified in the req
 
 Region information is cached. After a region configuration change, call `sdk.clearRegionCache()` to force a fresh lookup on the next request.
 
+### Error handling
+
+Federation plane calls fail with a gRPC status exception; inspect the status code to distinguish auth errors from missing resources:
+
+```java
+sdk.projects().getProject(request).exceptionally(error -> {
+    if (error.getCause() instanceof StatusRuntimeException e) {
+        switch (e.getStatus().getCode()) {
+            case UNAUTHENTICATED -> ...  // invalid or expired credentials
+            case PERMISSION_DENIED -> ...
+            case NOT_FOUND -> ...
+        }
+    }
+    ...
+});
+```
+
+Control plane calls fail with `io.akka.platformapi.controlplane.ApiException`, which carries the HTTP status code in `getCode()` and the response body in `getResponseBody()`.
+
 ### Lifecycle
 
 Close the SDK when your application shuts down to release the underlying gRPC channels and (if applicable) the managed `ActorSystem`:
@@ -222,6 +290,8 @@ Close the SDK when your application shuts down to release the underlying gRPC ch
 ```java
 sdk.close();
 ```
+
+When embedding the SDK in a long-running application, create one instance at startup and share it; the clients are thread-safe and tokens are cached across calls.
 
 ---
 
